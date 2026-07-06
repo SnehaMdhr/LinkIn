@@ -7,7 +7,7 @@ import authRoutes from "./routes/authRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
 import linkRoutes from "./routes/linkRoutes.js";
 import publicRoutes from "./routes/publicRoutes.js";
-
+import adminRoutes from "./routes/adminRoutes.js";
 dotenv.config();
 
 // Connect to MongoDB
@@ -29,6 +29,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/links", linkRoutes);
 app.use("/api/user", publicRoutes);
+app.use("/api/admin", adminRoutes); 
 
 const PORT = process.env.PORT || 5000;
 
