@@ -1,4 +1,4 @@
-import Link from "../models/Link.js";
+import Link from "../models/link.js";
 
 // @desc  Get all links for a user
 // @route GET /api/links?userId=xxxx
@@ -69,6 +69,23 @@ export const deleteLink = async (req, res) => {
     }
 
     res.status(200).json({ message: "Link deleted" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// @desc  Get a single link by its ID
+// @route GET /api/links/single/:id
+export const getLinkById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const link = await Link.findById(id);
+    if (!link) {
+      return res.status(404).json({ message: "Link not found" });
+    }
+
+    res.status(200).json(link);
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
