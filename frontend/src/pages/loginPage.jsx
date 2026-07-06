@@ -25,8 +25,12 @@ function LoginPage() {
 
     try {
       const data = await loginUser(formData);
-      login(data.user); // store user in context + localStorage
-      navigate("/dashboard");
+      login(data.user);
+      if(data.user.role === "admin") {
+        navigate("/admin");
+      }else{
+        navigate("/dashboard");
+      }
     } catch (err) {
       setError(err.response?.data?.message || "Invalid email or password.");
     } finally {
