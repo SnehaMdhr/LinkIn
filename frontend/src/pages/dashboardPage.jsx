@@ -5,6 +5,7 @@ import { getLinks, deleteLink } from "../services/linkServices";
 import ProfileCard from "../components/profileCard";
 import StatisticsCard from "../components/statisticsCard";
 import LinkCard from "../components/linkCard";
+import QrCard from "../components/qrCard";
 
 function DashboardPage() {
   const { user, logout } = useContext(AuthContext);
@@ -74,10 +75,11 @@ function DashboardPage() {
       <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
         {/* Profile + Stats row */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="sm:col-span-2">
+          <div className="sm:col-span-2 space-y-4">
             <ProfileCard user={user} />
+            <StatisticsCard linkCount={links.length} />
           </div>
-          <StatisticsCard linkCount={links.length} />
+          <QrCard username={user.username} />
         </div>
 
         {/* Links section */}
@@ -96,7 +98,8 @@ function DashboardPage() {
             <p className="text-gray-400 text-sm">Loading links...</p>
           ) : links.length === 0 ? (
             <p className="text-gray-400 text-sm">
-              You haven't added any links yet. Click "+ Add Link" to get started.
+              You haven't added any links yet. Click "+ Add Link" to get
+              started.
             </p>
           ) : (
             <div className="space-y-3">
