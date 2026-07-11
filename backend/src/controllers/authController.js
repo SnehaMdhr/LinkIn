@@ -4,16 +4,23 @@ import User from "../models/user.js";
 // @route POST /api/auth/register
 export const registerUser = async (req, res) => {
   try {
-    const { name, email, password, username } = req.body;
+    const { name, email, password, username: rawUsername } = req.body;
+    const username = rawUsername?.trim();
+    const trimmedEmail = email?.trim();
+    const trimmedName = name?.trim();
 
-    // Check if user already exists (basic functionality check, not security validation)
-    const existingUser = await User.findOne({ $or: [{ email }, { username }] });
+    if (!username || !trimmedEmail || !trimmedName || !password) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ $or: [{ email: trimmedEmail }, { username }] });
     if (existingUser) {
       return res.status(400).json({ message: "User with this email or username already exists" });
     }
 
     // NOTE: password stored as plain text for now (Day 1, no security)
-    const user = await User.create({ name, email, password, username });
+    const user = await User.create({ name: trimmedName, email: trimmedEmail, password, username });
 
     res.status(201).json({
       message: "User registered successfully",
@@ -23,6 +30,10 @@ export const registerUser = async (req, res) => {
         email: user.email,
         username: user.username,
         role: user.role,
+        theme: user.theme,
+        bio: user.bio,
+        profileImage: user.profileImage,
+        status: user.status,
       },
     });
   } catch (error) {
@@ -35,8 +46,13 @@ export const registerUser = async (req, res) => {
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
+    const trimmedEmail = email?.trim();
 
-    const user = await User.findOne({ email });
+    if (!trimmedEmail || !password) {
+      return res.status(400).json({ message: "Email and password are required" });
+    }
+
+    const user = await User.findOne({ email: trimmedEmail });
     if (!user) {
       return res.status(400).json({ message: "Invalid email or password" });
     }
@@ -60,6 +76,10 @@ export const loginUser = async (req, res) => {
         email: user.email,
         username: user.username,
         role: user.role,
+        theme: user.theme,
+        bio: user.bio,
+        profileImage: user.profileImage,
+        status: user.status,
       },
     });
   } catch (error) {

@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import User from "../models/user.js";
 
 // @desc  Get logged-in user's profile
@@ -10,6 +11,9 @@ export const getProfile = async (req, res) => {
     if (!userId) {
       return res.status(400).json({ message: "userId is required" });
     }
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: "Invalid userId format" });
+    }
 
     const user = await User.findById(userId).select("-password");
     if (!user) {
@@ -18,6 +22,7 @@ export const getProfile = async (req, res) => {
 
     res.status(200).json(user);
   } catch (error) {
+    console.error("Get profile error:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
@@ -32,11 +37,25 @@ export const updateProfile = async (req, res) => {
     if (!userId) {
       return res.status(400).json({ message: "userId is required" });
     }
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({
+        message: "Invalid userId format — your session may be corrupted. Try logging out and back in.",
+        receivedUserId: userId,
+      });
+    }
+
+    // Only update fields that are actually provided (supports both full
+    // profile saves from the profile page and partial updates like theme-only)
+    const updateData = {};
+    if (name !== undefined) updateData.name = name;
+    if (bio !== undefined) updateData.bio = bio;
+    if (profileImage !== undefined) updateData.profileImage = profileImage;
+    if (theme !== undefined) updateData.theme = theme;
 
     const updatedUser = await User.findByIdAndUpdate(
       userId,
-      { name, bio, profileImage, theme },
-      { new: true, runValidators: true }
+      updateData,
+      { new: true }
     ).select("-password");
 
     if (!updatedUser) {
@@ -45,6 +64,11 @@ export const updateProfile = async (req, res) => {
 
     res.status(200).json({ message: "Profile updated", user: updatedUser });
   } catch (error) {
+    if (error.name === "ValidationError") {
+      console.error("Profile update validation error:", error.errors);
+    } else {
+      console.error("Profile update error:", error);
+    }
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };

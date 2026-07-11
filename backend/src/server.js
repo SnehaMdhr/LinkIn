@@ -17,7 +17,7 @@ const app = express();
 
 // Basic middleware (functionality only, no security hardening yet)
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "5mb" }));
 
 // Test route to confirm server is alive
 app.get("/", (req, res) => {

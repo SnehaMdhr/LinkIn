@@ -6,8 +6,9 @@ import Link from "../models/link.js";
 export const getPublicProfile = async (req, res) => {
   try {
     const { username } = req.params;
+    const trimmedUsername = username?.trim();
 
-    const user = await User.findOne({ username }).select("-password -email -role -status");
+    const user = await User.findOne({ username: trimmedUsername }).select("-password -email -role -status");
     if (!user) {
       return res.status(404).json({ message: "Profile not found" });
     }
