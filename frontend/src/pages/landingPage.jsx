@@ -1,28 +1,27 @@
 import { Link } from "react-router-dom";
+import { Button } from "../components/ui/button";
+import ThemeDropdown from "../components/ThemeDropdown";
 
 function LandingPage() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-white px-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-background to-card px-4 relative">
+      {/* Dark mode toggle in top-right corner */}
+      <div className="absolute top-6 right-6">
+        <ThemeDropdown />
+      </div>
       <div className="text-center max-w-xl">
-        <h1 className="text-5xl font-bold text-gray-900 mb-4">LinkIn</h1>
-        <p className="text-lg text-gray-600 mb-8">
+        <h1 className="text-5xl font-bold text-foreground mb-4">LinkIn</h1>
+        <p className="text-lg text-muted-foreground mb-8">
           One link for everything you are. Share all your social profiles,
           portfolio, and content with a single link.
         </p>
-
         <div className="flex gap-4 justify-center">
-          <Link
-            to="/register"
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition"
-          >
-            Get Started
-          </Link>
-          <Link
-            to="/login"
-            className="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-50 transition"
-          >
-            Login
-          </Link>
+          <Button asChild size="lg">
+            <Link to="/register">Get Started</Link>
+          </Button>
+          <Button variant="outline" size="lg" asChild>
+            <Link to="/login">Login</Link>
+          </Button>
         </div>
       </div>
     </div>
