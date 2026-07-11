@@ -2,6 +2,8 @@ import { useState, useEffect, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../../context/authContext";
 import { getAllUsers, updateUserStatus, deleteUser } from "../../services/adminServices";
+import { Button } from "../../components/ui/button";
+import ThemeDropdown from "../../components/ThemeDropdown";
 import SearchBar from "../../components/searchBar";
 import UserTable from "../../components/userTable";
 
@@ -56,29 +58,24 @@ function UsersListPage() {
   if (!user || user.role !== "admin") return null;
 
   return (
-    <div className="min-h-screen bg-gray-50 px-6 py-10">
+    <div className="min-h-screen bg-background px-6 py-10">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">All Users</h1>
-        <Link to="/admin" className="text-sm text-blue-600 hover:underline">
-          ← Back to Admin Dashboard
-        </Link>
+        <h1 className="text-2xl font-bold text-foreground">All Users</h1>
+        <div className="flex items-center gap-3">
+          <ThemeDropdown />
+          <Button variant="link" asChild>
+            <Link to="/admin">← Back to Admin Dashboard</Link>
+          </Button>
+        </div>
       </div>
 
-      <SearchBar
-        value={search}
-        onChange={handleSearchChange}
-        placeholder="Search by name, email, or username..."
-      />
+      <SearchBar value={search} onChange={handleSearchChange}
+        placeholder="Search by name, email, or username..." />
 
       {loading ? (
-        <p className="text-gray-400 text-sm mt-4">Loading users...</p>
+        <p className="text-muted-foreground text-sm mt-4">Loading users...</p>
       ) : (
-        <UserTable
-          users={users}
-          onSuspend={handleSuspend}
-          onActivate={handleActivate}
-          onDelete={handleDelete}
-        />
+        <UserTable users={users} onSuspend={handleSuspend} onActivate={handleActivate} onDelete={handleDelete} />
       )}
     </div>
   );
