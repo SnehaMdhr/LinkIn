@@ -2,6 +2,15 @@ import { useState, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../context/authContext";
 import api from "../services/api";
+import { Button } from "../components/ui/button";
+import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "../components/ui/select";
 
 const THEME_OPTIONS = ["light", "dark", "colorful", "minimal"];
 
@@ -47,93 +56,72 @@ function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-10">
-      <div className="max-w-md mx-auto bg-white shadow-md rounded-lg p-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Edit Profile</h1>
+    <div className="min-h-screen bg-background px-4 py-10">
+      <Card className="w-full max-w-md mx-auto">
+        <CardHeader>
+          <CardTitle className="text-2xl">Edit Profile</CardTitle>
+        </CardHeader>
+        <CardContent>
 
         {error && (
-          <div className="bg-red-50 text-red-600 text-sm rounded-md px-4 py-2 mb-4">
-            {error}
-          </div>
+          <div className="bg-destructive/10 text-destructive text-sm rounded-md px-4 py-2 mb-4">{error}</div>
         )}
         {success && (
-          <div className="bg-green-50 text-green-600 text-sm rounded-md px-4 py-2 mb-4">
-            {success}
-          </div>
+          <div className="bg-primary/10 text-primary text-sm rounded-md px-4 py-2 mb-4">{success}</div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+            <label className="block text-sm font-medium text-foreground mb-1">Name</label>
+            <input type="text" name="name" value={formData.name} onChange={handleChange}
+              className="w-full border border-input rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring" />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
-            <textarea
-              name="bio"
-              value={formData.bio}
-              onChange={handleChange}
-              rows="3"
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Tell people a bit about yourself..."
-            />
+            <label className="block text-sm font-medium text-foreground mb-1">Bio</label>
+            <textarea name="bio" value={formData.bio} onChange={handleChange} rows="3"
+              className="w-full border border-input rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring"
+              placeholder="Tell people a bit about yourself..." />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Profile Image URL
-            </label>
-            <input
-              type="text"
-              name="profileImage"
-              value={formData.profileImage}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="https://example.com/your-photo.jpg"
-            />
-            <p className="text-xs text-gray-400 mt-1">
-              Basic implementation: paste an image URL for now (file upload comes later).
+            <label className="block text-sm font-medium text-foreground mb-1">Profile Image URL</label>
+            <input type="text" name="profileImage" value={formData.profileImage} onChange={handleChange}
+              className="w-full border border-input rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring"
+              placeholder="https://example.com/your-photo.jpg" />
+            <p className="text-xs text-muted-foreground mt-1">
+              Basic implementation: paste an image URL (file upload comes later).
             </p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Theme</label>
-            <select
-              name="theme"
+            <label className="block text-sm font-medium text-foreground mb-1">Theme</label>
+            <Select
               value={formData.theme}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onValueChange={(value) => setFormData({ ...formData, theme: value })}
             >
-              {THEME_OPTIONS.map((t) => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {THEME_OPTIONS.map((t) => (
+                  <SelectItem key={t} value={t}>{t}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="flex gap-3 pt-2">
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 bg-blue-600 text-white py-2 rounded-md font-medium hover:bg-blue-700 transition disabled:opacity-50"
-            >
+            <Button type="submit" disabled={loading} className="flex-1" size="lg">
               {loading ? "Saving..." : "Save Changes"}
-            </button>
-            <Link
-              to="/dashboard"
-              className="flex-1 text-center border border-gray-300 text-gray-700 py-2 rounded-md font-medium hover:bg-gray-50 transition"
-            >
-              Back
-            </Link>
+            </Button>
+            <Button variant="outline" className="flex-1" size="lg" asChild>
+              <Link to="/dashboard">Back</Link>
+            </Button>
           </div>
         </form>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

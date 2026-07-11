@@ -2,6 +2,16 @@ import { useState, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../context/authContext";
 import { createLink } from "../services/linkServices";
+import { Button } from "../components/ui/button";
+import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card";
+import PlatformIcon from "../components/PlatformIcon";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "../components/ui/select";
 
 const PLATFORM_OPTIONS = [
   "GitHub", "LinkedIn", "Instagram", "Facebook",
@@ -41,86 +51,69 @@ function AddLinkPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-10">
-      <div className="max-w-md mx-auto bg-white shadow-md rounded-lg p-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Add a New Link</h1>
+    <div className="min-h-screen bg-background px-4 py-10">
+      <Card className="w-full max-w-md mx-auto">
+        <CardHeader>
+          <CardTitle className="text-2xl">Add a New Link</CardTitle>
+        </CardHeader>
+        <CardContent>
 
-        {error && (
-          <div className="bg-red-50 text-red-600 text-sm rounded-md px-4 py-2 mb-4">
-            {error}
-          </div>
-        )}
+        {error && <div className="bg-destructive/10 text-destructive text-sm rounded-md px-4 py-2 mb-4">{error}</div>}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Platform</label>
-            <select
-              name="platform"
-              value={formData.platform}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {PLATFORM_OPTIONS.map((p) => (
-                <option key={p} value={p}>{p}</option>
-              ))}
-            </select>
+            <label className="block text-sm font-medium text-foreground mb-1">Platform</label>
+              <Select
+                value={formData.platform}
+                onValueChange={(value) => setFormData({ ...formData, platform: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PLATFORM_OPTIONS.map((p) => (
+                    <SelectItem key={p} value={p}>
+                      <span className="flex items-center gap-2">
+                        <PlatformIcon platform={p} className="w-4 h-4" />
+                        {p}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-            <input
-              type="text"
-              name="title"
-              value={formData.title}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="My GitHub Profile"
-            />
+            <label className="block text-sm font-medium text-foreground mb-1">Title</label>
+            <input type="text" name="title" value={formData.title} onChange={handleChange}
+              className="w-full border border-input rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring"
+              placeholder="My GitHub Profile" />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">URL</label>
-            <input
-              type="text"
-              name="url"
-              value={formData.url}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="https://github.com/yourname"
-            />
+            <label className="block text-sm font-medium text-foreground mb-1">URL</label>
+            <input type="text" name="url" value={formData.url} onChange={handleChange}
+              className="w-full border border-input rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring"
+              placeholder="https://github.com/yourname" />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Position (display order)
-            </label>
-            <input
-              type="number"
-              name="position"
-              value={formData.position}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              min="0"
-            />
+            <label className="block text-sm font-medium text-foreground mb-1">Position (display order)</label>
+            <input type="number" name="position" value={formData.position} onChange={handleChange}
+              className="w-full border border-input rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring" min="0" />
           </div>
 
           <div className="flex gap-3 pt-2">
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 bg-blue-600 text-white py-2 rounded-md font-medium hover:bg-blue-700 transition disabled:opacity-50"
-            >
+            <Button type="submit" disabled={loading} className="flex-1" size="lg">
               {loading ? "Adding..." : "Add Link"}
-            </button>
-            <Link
-              to="/dashboard"
-              className="flex-1 text-center border border-gray-300 text-gray-700 py-2 rounded-md font-medium hover:bg-gray-50 transition"
-            >
-              Cancel
-            </Link>
+            </Button>
+            <Button variant="outline" className="flex-1" size="lg" asChild>
+              <Link to="/dashboard">Cancel</Link>
+            </Button>
           </div>
         </form>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

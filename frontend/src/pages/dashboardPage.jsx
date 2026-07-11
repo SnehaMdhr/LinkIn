@@ -1,7 +1,11 @@
 import { useState, useEffect, useContext } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/authContext";
 import { getLinks, deleteLink } from "../services/linkServices";
+import { Button } from "../components/ui/button";
+import ThemeDropdown from "../components/ThemeDropdown";
+import ProfileEditModal from "../components/ProfileEditModal";
+import AddLinkModal from "../components/AddLinkModal";
 import ProfileCard from "../components/profileCard";
 import StatisticsCard from "../components/statisticsCard";
 import LinkCard from "../components/linkCard";
@@ -13,6 +17,8 @@ function DashboardPage() {
 
   const [links, setLinks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [addLinkOpen, setAddLinkOpen] = useState(false);
 
   // Redirect to login if no user in context (functional guard, not real auth yet)
   useEffect(() => {
@@ -52,28 +58,22 @@ function DashboardPage() {
   if (!user) return null; // avoid flashing content before redirect
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Top bar */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-        <h1 className="text-xl font-bold text-gray-900">LinkIn Dashboard</h1>
-        <div className="flex gap-3">
-          <Link
-            to="/profile"
-            className="text-sm text-gray-600 hover:text-blue-600 px-4 py-2 rounded-md border border-gray-200"
-          >
+      <div className="bg-card border-b border-border px-6 py-4 flex justify-between items-center">
+        <h1 className="text-xl font-bold text-foreground">LinkIn Dashboard</h1>
+        <div className="flex items-center gap-2">
+          <ThemeDropdown />
+          <Button variant="outline" size="sm" onClick={() => setProfileOpen(true)}>
             Edit Profile
-          </Link>
-          <button
-            onClick={handleLogout}
-            className="text-sm text-red-600 hover:text-red-700 px-4 py-2 rounded-md border border-red-100"
-          >
+          </Button>
+          <Button variant="ghost" size="sm" onClick={handleLogout} className="text-destructive hover:text-destructive">
             Logout
-          </button>
+          </Button>
         </div>
       </div>
 
       <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
-        {/* Profile + Stats row */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="sm:col-span-2 space-y-4">
             <ProfileCard user={user} />
@@ -82,24 +82,19 @@ function DashboardPage() {
           <QrCard username={user.username} />
         </div>
 
-        {/* Links section */}
         <div>
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-bold text-gray-900">Your Links</h2>
-            <Link
-              to="/links/add"
-              className="bg-blue-600 text-white text-sm px-4 py-2 rounded-md hover:bg-blue-700 transition"
-            >
+            <h2 className="text-lg font-bold text-foreground">Your Links</h2>
+            <Button onClick={() => setAddLinkOpen(true)}>
               + Add Link
-            </Link>
+            </Button>
           </div>
 
           {loading ? (
-            <p className="text-gray-400 text-sm">Loading links...</p>
+            <p className="text-muted-foreground text-sm">Loading links...</p>
           ) : links.length === 0 ? (
-            <p className="text-gray-400 text-sm">
-              You haven't added any links yet. Click "+ Add Link" to get
-              started.
+            <p className="text-muted-foreground text-sm">
+              You haven't added any links yet. Click "+ Add Link" to get started.
             </p>
           ) : (
             <div className="space-y-3">
@@ -110,6 +105,9 @@ function DashboardPage() {
           )}
         </div>
       </div>
+
+      <ProfileEditModal key={user?.id || "guest"} open={profileOpen} onOpenChange={setProfileOpen} />
+      <AddLinkModal open={addLinkOpen} onOpenChange={setAddLinkOpen} onLinkAdded={fetchLinks} />
     </div>
   );
 }
