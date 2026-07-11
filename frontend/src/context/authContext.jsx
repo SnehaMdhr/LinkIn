@@ -1,4 +1,5 @@
 import { createContext, useState, useEffect } from "react";
+import { applyTheme } from "../utils/theme";
 
 export const AuthContext = createContext();
 
@@ -8,18 +9,29 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const storedUser = localStorage.getItem("linkin_user");
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      const u = JSON.parse(storedUser);
+      setUser(u);
+      applyTheme(u?.theme || "light");
+    } else {
+      applyTheme("light");
     }
   }, []);
+
+  /* Re-sync theme whenever user changes (e.g. after public profile visit) */
+  useEffect(() => {
+    applyTheme(user?.theme || "light");
+  }, [user]);
 
   const login = (userData) => {
     setUser(userData);
     localStorage.setItem("linkin_user", JSON.stringify(userData));
+    applyTheme(userData?.theme || "light");
   };
 
   const logout = () => {
     setUser(null);
     localStorage.removeItem("linkin_user");
+    applyTheme("light");
   };
 
   return (

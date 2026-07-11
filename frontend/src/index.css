@@ -1,3 +1,213 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* =============================================
+   shadcn/ui COLOR THEME — exact hex values
+   + RGB for Tailwind v3 md-* utility classes
+   ============================================= */
+
+@layer base {
+  :root {
+    /* shadcn design tokens (exact hex) */
+    --background: #fbfcf8;
+    --foreground: #0f172a;
+    --card: #ffffff;
+    --card-foreground: #0f172a;
+    --popover: #ffffff;
+    --popover-foreground: #0f172a;
+    --primary: #aff33e;
+    --primary-foreground: #000000;
+    --secondary: #334155;
+    --secondary-foreground: #f8fafc;
+    --muted: #f1f5f9;
+    --muted-foreground: #64748b;
+    --accent: #f0fdf4;
+    --accent-foreground: #166534;
+    --destructive: #ef4444;
+    --destructive-foreground: #ffffff;
+    --border: #e2e8f0;
+    --input: #e2e8f0;
+    --ring: #aff33e;
+    --radius: 1rem;
+
+    /* Tailwind v3 space-separated RGB (for md-* classes) */
+    --md-background: 251 252 248;
+    --md-surface: 255 255 255;
+    --md-foreground: 15 23 42;
+    --md-muted-foreground: 100 116 139;
+    --md-muted: 241 245 249;
+    --md-secondary: 51 65 85;
+    --md-secondary-foreground: 248 250 252;
+    --md-primary: 175 243 62;
+    --md-primary-foreground: 0 0 0;
+    --md-accent: 240 253 244;
+    --md-accent-foreground: 22 101 52;
+    --md-destructive: 239 68 68;
+    --md-destructive-foreground: 255 255 255;
+    --md-border: 226 232 240;
+    --md-input: 226 232 240;
+    --md-ring: 175 243 62;
+    --md-on-tertiary: 0 0 0;
+    --md-error-container: 254 226 226;
+    --md-on-error-container: 153 27 27;
+
+    /* Chart & Sidebar (exact hex) */
+    --chart-1: #aff33e;
+    --chart-2: #334155;
+    --chart-3: #22c55e;
+    --chart-4: #64748b;
+    --chart-5: #94a3b8;
+    --sidebar: #ffffff;
+    --sidebar-foreground: #0f172a;
+    --sidebar-primary: #aff33e;
+    --sidebar-primary-foreground: #000000;
+    --sidebar-accent: #f8fafc;
+    --sidebar-accent-foreground: #0f172a;
+    --sidebar-border: #f1f5f9;
+    --sidebar-ring: #aff33e;
+
+    --font-sans: Inter, system-ui, sans-serif;
+    --font-mono: JetBrains Mono, monospace;
+    --font-serif: Georgia, serif;
+
+    /* Shadows (light) */
+    --shadow-2xs: 0px 8px 20px 0px hsl(0 0% 0% / 0.03);
+    --shadow-xs: 0px 8px 20px 0px hsl(0 0% 0% / 0.03);
+    --shadow-sm: 0px 8px 20px 0px hsl(0 0% 0% / 0.05), 0px 1px 2px -1px hsl(0 0% 0% / 0.05);
+    --shadow: 0px 8px 20px 0px hsl(0 0% 0% / 0.05), 0px 1px 2px -1px hsl(0 0% 0% / 0.05);
+    --shadow-md: 0px 8px 20px 0px hsl(0 0% 0% / 0.05), 0px 2px 4px -1px hsl(0 0% 0% / 0.05);
+    --shadow-lg: 0px 8px 20px 0px hsl(0 0% 0% / 0.05), 0px 4px 6px -1px hsl(0 0% 0% / 0.05);
+    --shadow-xl: 0px 8px 20px 0px hsl(0 0% 0% / 0.05), 0px 8px 10px -1px hsl(0 0% 0% / 0.05);
+    --shadow-2xl: 0px 8px 20px 0px hsl(0 0% 0% / 0.13);
+    --tracking-normal: -0.01em;
+  }
+
+  .dark {
+    --background: #020617;
+    --foreground: #f8fafc;
+    --card: #0f172a;
+    --card-foreground: #f8fafc;
+    --popover: #0f172a;
+    --popover-foreground: #f8fafc;
+    --primary: #aff33e;
+    --primary-foreground: #000000;
+    --secondary: #1e293b;
+    --secondary-foreground: #f8fafc;
+    --muted: #1e293b;
+    --muted-foreground: #94a3b8;
+    --accent: #14532d;
+    --accent-foreground: #aff33e;
+    --destructive: #991b1b;
+    --destructive-foreground: #ffffff;
+    --border: #1e293b;
+    --input: #1e293b;
+    --ring: #aff33e;
+    --radius: 1rem;
+
+    /* Tailwind v3 RGB for dark mode */
+    --md-background: 2 6 23;
+    --md-surface: 15 23 42;
+    --md-foreground: 248 250 252;
+    --md-muted-foreground: 148 163 184;
+    --md-muted: 30 41 59;
+    --md-secondary: 30 41 59;
+    --md-secondary-foreground: 248 250 252;
+    --md-primary: 175 243 62;
+    --md-primary-foreground: 0 0 0;
+    --md-accent: 20 83 45;
+    --md-accent-foreground: 175 243 62;
+    --md-destructive: 153 27 27;
+    --md-destructive-foreground: 255 255 255;
+    --md-border: 30 41 59;
+    --md-input: 30 41 59;
+    --md-ring: 175 243 62;
+    --md-on-tertiary: 0 0 0;
+    --md-error-container: 70 25 25;
+    --md-on-error-container: 254 202 202;
+
+    /* Dark chart & sidebar (exact hex) */
+    --chart-1: #aff33e;
+    --chart-2: #3b82f6;
+    --chart-3: #22c55e;
+    --chart-4: #a855f7;
+    --chart-5: #f59e0b;
+    --sidebar: #020617;
+    --sidebar-foreground: #f8fafc;
+    --sidebar-primary: #aff33e;
+    --sidebar-primary-foreground: #000000;
+    --sidebar-accent: #1e293b;
+    --sidebar-accent-foreground: #f8fafc;
+    --sidebar-border: #1e293b;
+    --sidebar-ring: #aff33e;
+
+    --font-sans: Inter, system-ui, sans-serif;
+    --font-mono: JetBrains Mono, monospace;
+    --font-serif: Georgia, serif;
+
+    /* Shadows (dark) */
+    --shadow-2xs: 0px 10px 25px 0px hsl(0 0% 0% / 0.20);
+    --shadow-xs: 0px 10px 25px 0px hsl(0 0% 0% / 0.20);
+    --shadow-sm: 0px 10px 25px 0px hsl(0 0% 0% / 0.40), 0px 1px 2px -1px hsl(0 0% 0% / 0.40);
+    --shadow: 0px 10px 25px 0px hsl(0 0% 0% / 0.40), 0px 1px 2px -1px hsl(0 0% 0% / 0.40);
+    --shadow-md: 0px 10px 25px 0px hsl(0 0% 0% / 0.40), 0px 2px 4px -1px hsl(0 0% 0% / 0.40);
+    --shadow-lg: 0px 10px 25px 0px hsl(0 0% 0% / 0.40), 0px 4px 6px -1px hsl(0 0% 0% / 0.40);
+    --shadow-xl: 0px 10px 25px 0px hsl(0 0% 0% / 0.40), 0px 8px 10px -1px hsl(0 0% 0% / 0.40);
+    --shadow-2xl: 0px 10px 25px 0px hsl(0 0% 0% / 1.00);
+  }
+
+  * {
+    border-color: var(--border);
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: "Inter", "system-ui", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.01em;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  #root {
+    min-height: 100vh;
+  }
+
+  *:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+
+
+  ::selection {
+    background-color: rgb(var(--md-primary) / 0.2);
+    color: rgb(var(--md-primary));
+  }
+}
+
+@layer components {
+  .md-blobs-container {
+    @apply pointer-events-none fixed inset-0 -z-10 overflow-hidden;
+  }
+}
+
+@layer utilities {
+  .animation-delay-2000 { animation-delay: 2s; }
+  .animation-delay-4000 { animation-delay: 4s; }
+  .animation-delay-6000 { animation-delay: 6s; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-md-drift,
+    .animate-md-drift-slow {
+      animation: none !important;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
