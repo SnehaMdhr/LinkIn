@@ -1,34 +1,168 @@
-import { useContext, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../../context/authContext";
-import { Card, CardHeader, CardTitle, CardDescription } from "../../components/ui/card";
+import { getAllUsers, deleteUser } from "../../services/adminServices";
+import { Button } from "../../components/ui/button";
 import ThemeDropdown from "../../components/ThemeDropdown";
+import ProfileEditModal from "../../components/ProfileEditModal";
+import SearchBar from "../../components/searchBar";
+import UserTable from "../../components/userTable";
+import CreateUserModal from "../../components/CreateUserModal";
+import UserDetailModal from "../../components/UserDetailModal";
+import ConfirmDialog from "../../components/ConfirmDialog";
 
 function AdminDashboardPage() {
-  const { user } = useContext(AuthContext);
+  const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
-  if (!user || user.role !== "admin") {
-    navigate("/dashboard");
-    return null;
-  }
+
+  const [users, setUsers] = useState([]);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [detailUserId, setDetailUserId] = useState(null);
+  const [logoutConfirm, setLogoutConfirm] = useState(false);
+  const LIMIT = 10;
+
+  const fetchUsers = async (searchTerm = "", pageNum = 1) => {
+    try {
+      setLoading(true);
+      const data = await getAllUsers(searchTerm, pageNum, LIMIT);
+      setUsers(data.users || []);
+      setTotalPages(data.totalPages || 1);
+      setPage(data.page || 1);
+    } catch (err) {
+      console.error("Failed to fetch users:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!user || user.role !== "admin") {
+      return;
+    }
+    fetchUsers();
+  }, [user, navigate]);
+
+  const handleSearchChange = (value) => {
+    setSearch(value);
+    fetchUsers(value, 1);
+  };
+
+  const handlePageChange = (newPage) => {
+    if (newPage < 1 || newPage > totalPages) return;
+    setPage(newPage);
+    fetchUsers(search, newPage);
+  };
+
+  const handleDelete = async (id) => {
+    await deleteUser(id);
+    fetchUsers(search, page);
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
+
+  if (!user || user.role !== "admin") return null;
+
   return (
-    <div className="min-h-screen bg-background px-6 py-10">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Admin Dashboard</h1>
-        <ThemeDropdown />
+    <div className="min-h-screen bg-background">
+      <div className="bg-card border-b border-border px-6 py-4 flex justify-between items-center">
+        <h1 className="text-xl font-bold text-foreground">LinkIn Dashboard</h1>
+        <div className="flex items-center gap-2">
+          <ThemeDropdown />
+          <Button variant="outline" size="sm" onClick={() => setProfileOpen(true)}>
+            Edit Profile
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setLogoutConfirm(true)}
+            className="text-destructive hover:text-destructive"
+          >
+            Logout
+          </Button>
+        </div>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
-        <Link to="/admin/users" className="block">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <CardHeader>
-              <CardTitle>Manage Users</CardTitle>
-              <CardDescription>
-                View, search, suspend, activate, or delete users.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </Link>
+
+      <div className="max-w-3xl mx-auto px-4 py-8 space-y-4">
+        <div className="flex items-center justify-between gap-4">
+          <SearchBar
+            value={search}
+            onChange={handleSearchChange}
+            placeholder="Search by name, email, or username..."
+          />
+          <Button onClick={() => setCreateOpen(true)}>+ Add User</Button>
+        </div>
+
+        {loading ? (
+          <p className="text-muted-foreground text-sm mt-4">Loading users...</p>
+        ) : (
+          <>
+            <UserTable
+              users={users}
+              onView={(id) => setDetailUserId(id)}
+              onDelete={handleDelete}
+            />
+
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between pt-4 border-t border-border">
+                <p className="text-xs text-muted-foreground">
+                  Page {page} of {totalPages}
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page <= 1}
+                    onClick={() => handlePageChange(page - 1)}
+                  >
+                    &larr; Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page >= totalPages}
+                    onClick={() => handlePageChange(page + 1)}
+                  >
+                    Next &rarr;
+                  </Button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
       </div>
+
+      <CreateUserModal
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        onUserCreated={() => fetchUsers(search)}
+      />
+
+      <ProfileEditModal key={user?.id || "guest"} open={profileOpen} onOpenChange={setProfileOpen} />
+      <UserDetailModal
+        open={detailUserId !== null}
+        onOpenChange={(val) => {
+          if (!val) setDetailUserId(null);
+        }}
+        userId={detailUserId}
+        onRefresh={() => fetchUsers(search)}
+      />
+
+      <ConfirmDialog
+        open={logoutConfirm}
+        onOpenChange={setLogoutConfirm}
+        title="Logout"
+        description="Are you sure you want to logout? You will need to sign in again."
+        onConfirm={handleLogout}
+        confirmLabel="Logout"
+      />
     </div>
   );
 }

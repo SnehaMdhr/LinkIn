@@ -1,0 +1,69 @@
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { Button } from "../ui/button";
+import ThemeDropdown from "../ThemeDropdown";
+
+const navLinks = [
+  { label: "Home", href: "#home" },
+  { label: "Features", href: "#features" },
+  { label: "Pricing", href: "#pricing" },
+  { label: "Contact", href: "#contact" },
+];
+
+function Navbar({ onLoginOpen, onRegisterOpen }) {
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  return (
+    <header
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        scrolled
+          ? "bg-background/80 backdrop-blur-md border-b border-border shadow-sm"
+          : "bg-transparent"
+      }`}
+    >
+      <nav className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+        <Link to="/" className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+            <span className="text-primary-foreground font-bold text-sm">L</span>
+          </div>
+          <span className="text-lg font-bold text-foreground tracking-tight">LinkIn</span>
+        </Link>
+
+        <div className="hidden md:flex items-center gap-6">
+          {navLinks.map((link) => (
+            <a
+              key={link.label}
+              href={link.href}
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {link.label}
+            </a>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-3">
+          <ThemeDropdown />
+          <Button
+            variant="ghost"
+            size="sm"
+            className="hidden sm:inline-flex"
+            onClick={onLoginOpen}
+          >
+            Login
+          </Button>
+          <Button size="sm" onClick={onRegisterOpen}>
+            Get Started
+          </Button>
+        </div>
+      </nav>
+    </header>
+  );
+}
+
+export default Navbar;

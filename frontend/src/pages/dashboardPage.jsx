@@ -6,6 +6,8 @@ import { Button } from "../components/ui/button";
 import ThemeDropdown from "../components/ThemeDropdown";
 import ProfileEditModal from "../components/ProfileEditModal";
 import AddLinkModal from "../components/AddLinkModal";
+import EditLinkModal from "../components/EditLinkModal";
+import ConfirmDialog from "../components/ConfirmDialog";
 import ProfileCard from "../components/profileCard";
 import StatisticsCard from "../components/statisticsCard";
 import LinkCard from "../components/linkCard";
@@ -19,11 +21,12 @@ function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [profileOpen, setProfileOpen] = useState(false);
   const [addLinkOpen, setAddLinkOpen] = useState(false);
+  const [editLinkId, setEditLinkId] = useState(null);
+  const [logoutConfirm, setLogoutConfirm] = useState(false);
 
-  // Redirect to login if no user in context (functional guard, not real auth yet)
   useEffect(() => {
     if (!user) {
-      navigate("/login");
+      navigate("/");
       return;
     }
     fetchLinks();
@@ -52,10 +55,10 @@ function DashboardPage() {
 
   const handleLogout = () => {
     logout();
-    navigate("/login");
+    navigate("/");
   };
 
-  if (!user) return null; // avoid flashing content before redirect
+  if (!user) return null; 
 
   return (
     <div className="min-h-screen bg-background">
@@ -67,7 +70,7 @@ function DashboardPage() {
           <Button variant="outline" size="sm" onClick={() => setProfileOpen(true)}>
             Edit Profile
           </Button>
-          <Button variant="ghost" size="sm" onClick={handleLogout} className="text-destructive hover:text-destructive">
+          <Button variant="ghost" size="sm" onClick={() => setLogoutConfirm(true)} className="text-destructive hover:text-destructive">
             Logout
           </Button>
         </div>
@@ -99,7 +102,12 @@ function DashboardPage() {
           ) : (
             <div className="space-y-3">
               {links.map((link) => (
-                <LinkCard key={link._id} link={link} onDelete={handleDelete} />
+                <LinkCard
+                  key={link._id}
+                  link={link}
+                  onDelete={handleDelete}
+                  onEdit={(id) => setEditLinkId(id)}
+                />
               ))}
             </div>
           )}
@@ -108,6 +116,20 @@ function DashboardPage() {
 
       <ProfileEditModal key={user?.id || "guest"} open={profileOpen} onOpenChange={setProfileOpen} />
       <AddLinkModal open={addLinkOpen} onOpenChange={setAddLinkOpen} onLinkAdded={fetchLinks} />
+      <EditLinkModal
+        open={editLinkId !== null}
+        onOpenChange={(val) => { if (!val) setEditLinkId(null); }}
+        linkId={editLinkId}
+        onLinkUpdated={fetchLinks}
+      />
+      <ConfirmDialog
+        open={logoutConfirm}
+        onOpenChange={setLogoutConfirm}
+        title="Logout"
+        description="Are you sure you want to logout? You will need to sign in again."
+        onConfirm={handleLogout}
+        confirmLabel="Logout"
+      />
     </div>
   );
 }

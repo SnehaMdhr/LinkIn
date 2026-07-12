@@ -1,29 +1,68 @@
-import { Link } from "react-router-dom";
-import { Button } from "../components/ui/button";
-import ThemeDropdown from "../components/ThemeDropdown";
+import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import {
+  Navbar,
+  Hero,
+  TrustedBy,
+  Features,
+  HowItWorks,
+  DashboardShowcase,
+  Stats,
+  Testimonials,
+  FAQ,
+  CTA,
+  Footer,
+  LoginDialog,
+  RegisterDialog,
+} from "../components/landing";
 
 function LandingPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [loginOpen, setLoginOpen] = useState(searchParams.get("auth") === "login");
+  const [registerOpen, setRegisterOpen] = useState(false);
+
+  const openLogin = () => {
+    setRegisterOpen(false);
+    setLoginOpen(true);
+  };
+
+  const openRegister = () => {
+    setLoginOpen(false);
+    setRegisterOpen(true);
+  };
+
+  const handleLoginClose = (val) => {
+    setLoginOpen(val);
+    if (!val) searchParams.delete("auth");
+    if (!val) setSearchParams(searchParams, { replace: true });
+  };
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-background to-card px-4 relative">
-      {/* Dark mode toggle in top-right corner */}
-      <div className="absolute top-6 right-6">
-        <ThemeDropdown />
-      </div>
-      <div className="text-center max-w-xl">
-        <h1 className="text-5xl font-bold text-foreground mb-4">LinkIn</h1>
-        <p className="text-lg text-muted-foreground mb-8">
-          One link for everything you are. Share all your social profiles,
-          portfolio, and content with a single link.
-        </p>
-        <div className="flex gap-4 justify-center">
-          <Button asChild size="lg">
-            <Link to="/register">Get Started</Link>
-          </Button>
-          <Button variant="outline" size="lg" asChild>
-            <Link to="/login">Login</Link>
-          </Button>
-        </div>
-      </div>
+    <div className="min-h-screen bg-background">
+      <Navbar onLoginOpen={openLogin} onRegisterOpen={openRegister} />
+      <main>
+        <Hero onRegisterOpen={openRegister} />
+        <TrustedBy />
+        <Features />
+        <HowItWorks />
+        <DashboardShowcase />
+        <Stats />
+        <Testimonials />
+        <FAQ />
+        <CTA onRegisterOpen={openRegister} />
+      </main>
+      <Footer />
+
+      <LoginDialog
+        open={loginOpen}
+        onOpenChange={handleLoginClose}
+        onSwitchToRegister={openRegister}
+      />
+      <RegisterDialog
+        open={registerOpen}
+        onOpenChange={setRegisterOpen}
+        onSwitchToLogin={openLogin}
+      />
     </div>
   );
 }
