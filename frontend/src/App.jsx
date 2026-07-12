@@ -11,8 +11,6 @@ import PublicProfilePage from "./pages/publicProfilePage";
 import NotFoundPage from "./pages/notFoundPage";
 
 import AdminDashboardPage from "./pages/admin/adminDashboardPage";
-import UsersListPage from "./pages/admin/userListPage";
-import UserDetailsPage from "./pages/admin/userDetailPage";
 
 function App() {
   return (
@@ -33,8 +31,6 @@ function App() {
 
       {/* Admin routes (no RBAC yet — role check only, added in Step 12) */}
       <Route path="/admin" element={<AdminDashboardPage />} />
-      <Route path="/admin/users" element={<UsersListPage />} />
-      <Route path="/admin/users/:id" element={<UserDetailsPage />} />
 
       {/* 404 fallback */}
       <Route path="*" element={<NotFoundPage />} />

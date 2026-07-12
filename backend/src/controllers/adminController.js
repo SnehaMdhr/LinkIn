@@ -1,11 +1,47 @@
 import User from "../models/user.js";
 import Link from "../models/link.js";
 
-// @desc  Get all users (optionally filtered by search query)
-// @route GET /api/admin/users?search=xxxx
+// @desc  Create a new user
+// @route POST /api/admin/users
+export const createUser = async (req, res) => {
+  try {
+    const { name, email, username, password, role, status, profileImage } = req.body;
+
+    if (!name || !email || !username || !password) {
+      return res.status(400).json({ message: "Name, email, username, and password are required" });
+    }
+
+    const existingUser = await User.findOne({ $or: [{ email }, { username }] });
+    if (existingUser) {
+      const field = existingUser.email === email ? "email" : "username";
+      return res.status(400).json({ message: `A user with that ${field} already exists` });
+    }
+
+    const newUser = await User.create({
+      name,
+      email,
+      username,
+      password,
+      role: role || "user",
+      status: status || "active",
+      profileImage: profileImage || "",
+    });
+
+    const { password: _, ...userWithoutPassword } = newUser.toObject();
+    res.status(201).json({ message: "User created", user: userWithoutPassword });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// @desc  Get all users (optionally filtered by search query, with pagination)
+// @route GET /api/admin/users?search=xxxx&page=1&limit=10
 export const getAllUsers = async (req, res) => {
   try {
-    const { search } = req.query;
+    const { search, page = 1, limit = 10 } = req.query;
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.min(50, Math.max(1, parseInt(limit)));
+    const skip = (pageNum - 1) * limitNum;
 
     let filter = {};
     if (search) {
@@ -18,8 +54,17 @@ export const getAllUsers = async (req, res) => {
       };
     }
 
-    const users = await User.find(filter).select("-password").sort({ createdAt: -1 });
-    res.status(200).json(users);
+    const [users, total] = await Promise.all([
+      User.find(filter).select("-password").sort({ createdAt: -1 }).skip(skip).limit(limitNum),
+      User.countDocuments(filter),
+    ]);
+
+    res.status(200).json({
+      users,
+      total,
+      page: pageNum,
+      totalPages: Math.ceil(total / limitNum),
+    });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
@@ -44,18 +89,26 @@ export const getUserDetails = async (req, res) => {
   }
 };
 
-// @desc  Update user status (suspend/activate) or role
+// @desc  Update user (status, role, name, email, username, bio)
 // @route PUT /api/admin/users/:id
 export const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, role } = req.body;
+    const { status, role, name, email, username, bio, profileImage } = req.body;
 
-    const updatedUser = await User.findByIdAndUpdate(
-      id,
-      { ...(status && { status }), ...(role && { role }) },
-      { new: true, runValidators: true }
-    ).select("-password");
+    const updateFields = {};
+    if (status) updateFields.status = status;
+    if (role) updateFields.role = role;
+    if (name) updateFields.name = name;
+    if (email) updateFields.email = email;
+    if (username) updateFields.username = username;
+    if (bio !== undefined) updateFields.bio = bio;
+    if (profileImage !== undefined) updateFields.profileImage = profileImage;
+
+    const updatedUser = await User.findByIdAndUpdate(id, updateFields, {
+      new: true,
+      runValidators: true,
+    }).select("-password");
 
     if (!updatedUser) {
       return res.status(404).json({ message: "User not found" });

@@ -1,8 +1,11 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
 import { Button } from "./ui/button";
 import PlatformIcon from "./PlatformIcon";
+import ConfirmDialog from "./ConfirmDialog";
 
-function LinkCard({ link, onDelete }) {
+function LinkCard({ link, onDelete, onEdit }) {
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
   return (
     <div className="bg-card rounded-lg shadow-sm border border-border p-4 flex items-center justify-between">
       <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -16,13 +19,22 @@ function LinkCard({ link, onDelete }) {
         </div>
       </div>
       <div className="flex gap-2 shrink-0">
-        <Button variant="ghost" size="sm" asChild>
-          <Link to={`/links/edit/${link._id}`}>Edit</Link>
+        <Button variant="ghost" size="sm" onClick={() => onEdit(link._id)}>
+          Edit
         </Button>
-        <Button variant="ghost" size="sm" onClick={() => onDelete(link._id)} className="text-destructive hover:text-destructive">
+        <Button variant="ghost" size="sm" onClick={() => setConfirmOpen(true)} className="text-destructive hover:text-destructive">
           Delete
         </Button>
       </div>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Delete link"
+        description={`Are you sure you want to delete "${link.title}"? This action cannot be undone.`}
+        onConfirm={() => onDelete(link._id)}
+        confirmLabel="Delete"
+      />
     </div>
   );
 }
