@@ -18,6 +18,7 @@ function RegisterDialog({ open, onOpenChange, onSwitchToLogin }) {
     email: "",
     username: "",
     password: "",
+    confirmPassword: "",
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -29,9 +30,16 @@ function RegisterDialog({ open, onOpenChange, onSwitchToLogin }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
     setLoading(true);
     try {
-      await registerUser(formData);
+      const { confirmPassword, ...dataToSend } = formData;
+      await registerUser(dataToSend);
       onOpenChange(false);
       navigate("/login");
     } catch (err) {
@@ -43,7 +51,7 @@ function RegisterDialog({ open, onOpenChange, onSwitchToLogin }) {
 
   const handleOpenChange = (val) => {
     if (!val) {
-      setFormData({ name: "", email: "", username: "", password: "" });
+      setFormData({ name: "", email: "", username: "", password: "", confirmPassword: "" });
       setError("");
     }
     onOpenChange(val);
@@ -74,7 +82,7 @@ function RegisterDialog({ open, onOpenChange, onSwitchToLogin }) {
               name="name"
               value={formData.name}
               onChange={handleChange}
-              placeholder="Sneha K"
+              placeholder="Enter your Name"
             />
           </div>
           <div className="space-y-2">
@@ -85,7 +93,7 @@ function RegisterDialog({ open, onOpenChange, onSwitchToLogin }) {
               name="email"
               value={formData.email}
               onChange={handleChange}
-              placeholder="you@example.com"
+              placeholder="Enter your Email"
             />
           </div>
           <div className="space-y-2">
@@ -96,7 +104,7 @@ function RegisterDialog({ open, onOpenChange, onSwitchToLogin }) {
               name="username"
               value={formData.username}
               onChange={handleChange}
-              placeholder="sneha"
+              placeholder="Enter your Username"
             />
             <p className="text-xs text-muted-foreground">
               linkin.com/{formData.username || "username"}
@@ -110,7 +118,18 @@ function RegisterDialog({ open, onOpenChange, onSwitchToLogin }) {
               name="password"
               value={formData.password}
               onChange={handleChange}
-              placeholder="••••••••"
+              placeholder="Enter your Password"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="reg-confirm-password">Confirm Password</Label>
+            <Input
+              id="reg-confirm-password"
+              type="password"
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              placeholder="Confirm your Password"
             />
           </div>
           <div className="flex gap-3 pt-2">

@@ -11,3 +11,4 @@ export { default as CTA } from "./CTA";
 export { default as Footer } from "./Footer";
 export { default as LoginDialog } from "./LoginDialog";
 export { default as RegisterDialog } from "./RegisterDialog";
+export { default as ForgotPasswordDialog } from "./ForgotPasswordDialog";

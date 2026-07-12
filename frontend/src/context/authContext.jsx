@@ -7,7 +7,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("linkin_user");
+    const storedUser = localStorage.getItem("linkin_user") || sessionStorage.getItem("linkin_user");
     if (storedUser) {
       const u = JSON.parse(storedUser);
       setUser(u);
@@ -22,15 +22,20 @@ export function AuthProvider({ children }) {
     applyTheme(user?.theme || "light");
   }, [user]);
 
-  const login = (userData) => {
+  const login = (userData, rememberMe = true) => {
     setUser(userData);
-    localStorage.setItem("linkin_user", JSON.stringify(userData));
+    if (rememberMe) {
+      localStorage.setItem("linkin_user", JSON.stringify(userData));
+    } else {
+      sessionStorage.setItem("linkin_user", JSON.stringify(userData));
+    }
     applyTheme(userData?.theme || "light");
   };
 
   const logout = () => {
     setUser(null);
     localStorage.removeItem("linkin_user");
+    sessionStorage.removeItem("linkin_user");
     applyTheme("light");
   };
 

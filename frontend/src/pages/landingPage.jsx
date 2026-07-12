@@ -14,21 +14,31 @@ import {
   Footer,
   LoginDialog,
   RegisterDialog,
+  ForgotPasswordDialog,
 } from "../components/landing";
 
 function LandingPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [loginOpen, setLoginOpen] = useState(searchParams.get("auth") === "login");
   const [registerOpen, setRegisterOpen] = useState(false);
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
 
   const openLogin = () => {
     setRegisterOpen(false);
+    setForgotPasswordOpen(false);
     setLoginOpen(true);
   };
 
   const openRegister = () => {
     setLoginOpen(false);
+    setForgotPasswordOpen(false);
     setRegisterOpen(true);
+  };
+
+  const openForgotPassword = () => {
+    setLoginOpen(false);
+    setRegisterOpen(false);
+    setForgotPasswordOpen(true);
   };
 
   const handleLoginClose = (val) => {
@@ -57,10 +67,16 @@ function LandingPage() {
         open={loginOpen}
         onOpenChange={handleLoginClose}
         onSwitchToRegister={openRegister}
+        onSwitchToForgotPassword={openForgotPassword}
       />
       <RegisterDialog
         open={registerOpen}
         onOpenChange={setRegisterOpen}
+        onSwitchToLogin={openLogin}
+      />
+      <ForgotPasswordDialog
+        open={forgotPasswordOpen}
+        onOpenChange={setForgotPasswordOpen}
         onSwitchToLogin={openLogin}
       />
     </div>

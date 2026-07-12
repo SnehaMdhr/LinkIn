@@ -1,16 +1,21 @@
+import crypto from "crypto";
 import User from "../models/user.js";
 
 // @desc  Register a new user
 // @route POST /api/auth/register
 export const registerUser = async (req, res) => {
   try {
-    const { name, email, password, username: rawUsername } = req.body;
+    const { name, email, password, confirmPassword, username: rawUsername } = req.body;
     const username = rawUsername?.trim();
     const trimmedEmail = email?.trim();
     const trimmedName = name?.trim();
 
-    if (!username || !trimmedEmail || !trimmedName || !password) {
+    if (!username || !trimmedEmail || !trimmedName || !password || !confirmPassword) {
       return res.status(400).json({ message: "All fields are required" });
+    }
+
+    if (password !== confirmPassword) {
+      return res.status(400).json({ message: "Passwords do not match" });
     }
 
     // Check if user already exists
@@ -82,6 +87,69 @@ export const loginUser = async (req, res) => {
         status: user.status,
       },
     });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// @desc  Forgot password — generate reset token
+// @route POST /api/auth/forgot-password
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    const user = await User.findOne({ email: email.trim() });
+    if (!user) {
+      return res.status(200).json({ message: "If that email is registered, you will receive a reset link." });
+    }
+
+    const resetToken = crypto.randomBytes(32).toString("hex");
+
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpire = Date.now() + 3600000; // 1 hour
+    await user.save();
+
+    const resetUrl = `${req.protocol}://${req.get("host")}/reset-password/${resetToken}`;
+
+    res.status(200).json({
+      message: "If that email is registered, you will receive a reset link.",
+      ...(process.env.NODE_ENV !== "production" && { resetUrl }),
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// @desc  Reset password with token
+// @route POST /api/auth/reset-password/:token
+export const resetPassword = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    if (!password) {
+      return res.status(400).json({ message: "Password is required" });
+    }
+
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpire: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid or expired reset token" });
+    }
+
+    user.password = password;
+    user.resetPasswordToken = null;
+    user.resetPasswordExpire = null;
+    await user.save();
+
+    res.status(200).json({ message: "Password reset successful. You can now login." });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }

@@ -13,8 +13,9 @@ import {
   DialogDescription,
 } from "../ui/dialog";
 
-function LoginDialog({ open, onOpenChange, onSwitchToRegister }) {
+function LoginDialog({ open, onOpenChange, onSwitchToRegister, onSwitchToForgotPassword }) {
   const [formData, setFormData] = useState({ email: "", password: "" });
+  const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const { login } = useContext(AuthContext);
@@ -29,7 +30,7 @@ function LoginDialog({ open, onOpenChange, onSwitchToRegister }) {
     setLoading(true);
     try {
       const data = await loginUser(formData);
-      login(data.user);
+      login(data.user, rememberMe);
       onOpenChange(false);
       navigate(data.user.role === "admin" ? "/admin" : "/dashboard");
     } catch (err) {
@@ -42,6 +43,7 @@ function LoginDialog({ open, onOpenChange, onSwitchToRegister }) {
   const handleOpenChange = (val) => {
     if (!val) {
       setFormData({ email: "", password: "" });
+      setRememberMe(true);
       setError("");
     }
     onOpenChange(val);
@@ -85,6 +87,15 @@ function LoginDialog({ open, onOpenChange, onSwitchToRegister }) {
               onChange={handleChange}
               placeholder="••••••••"
             />
+          </div>
+          <div className="flex items-center justify-end">
+            <button
+              type="button"
+              onClick={onSwitchToForgotPassword}
+              className="text-sm text-primary hover:underline font-medium"
+            >
+              Forgot password?
+            </button>
           </div>
           <div className="flex gap-3 pt-2">
             <Button type="submit" disabled={loading} className="flex-1">
