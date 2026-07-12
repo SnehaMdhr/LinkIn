@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
+import { QRCodeCanvas } from "qrcode.react";
 import api from "../services/api";
 import PlatformIcon from "../components/PlatformIcon";
+import { trackProfileView } from "../services/analyticsServices";
 
 function PublicProfilePage() {
   const { username } = useParams();
@@ -17,6 +19,10 @@ function PublicProfilePage() {
         setNotFound(false);
         const response = await api.get(`/user/${username}`);
         setProfile(response.data);
+        // Track profile view
+        if (response.data?.user?._id) {
+          trackProfileView(response.data.user._id).catch(() => {});
+        }
       } catch (err) {
         if (err.response?.status === 404) {
           setNotFound(true);
@@ -169,8 +175,16 @@ function PublicProfilePage() {
           )}
         </div>
 
+        {/* ---- QR CODE ---- */}
+        <div className="mt-8">
+          <div className="bg-card/40 backdrop-blur-sm border border-border/30 rounded-xl p-4 inline-flex flex-col items-center">
+            <p className="text-[10px] text-muted-foreground/50 mb-2 uppercase tracking-wider">Scan to share</p>
+            <QRCodeCanvas value={`${window.location.origin}/${username}`} size={80} />
+          </div>
+        </div>
+
         {/* ---- FOOTER ---- */}
-        <p className="mt-10 text-xs text-muted-foreground/30 transition-colors duration-200 hover:text-muted-foreground/60">
+        <p className="mt-8 text-xs text-muted-foreground/30 transition-colors duration-200 hover:text-muted-foreground/60">
           Powered by LinkIn
         </p>
       </div>
