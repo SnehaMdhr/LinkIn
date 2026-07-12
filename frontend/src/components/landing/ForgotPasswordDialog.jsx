@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { forgotPassword } from "../../services/authServices";
+import { useToast } from "../../context/toastContext";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
@@ -12,6 +13,7 @@ import {
 } from "../ui/dialog";
 
 export default function ForgotPasswordDialog({ open, onOpenChange, onSwitchToLogin }) {
+  const toast = useToast();
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [resetUrl, setResetUrl] = useState("");
@@ -27,11 +29,14 @@ export default function ForgotPasswordDialog({ open, onOpenChange, onSwitchToLog
     try {
       const data = await forgotPassword(email);
       setMessage(data.message);
+      toast.success("Password reset link sent! Check your email.");
       if (data.resetUrl) {
         setResetUrl(data.resetUrl);
       }
     } catch (err) {
-      setError(err.response?.data?.message || "Something went wrong.");
+      const msg = err.response?.data?.message || "Something went wrong.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }

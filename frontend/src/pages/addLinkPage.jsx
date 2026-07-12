@@ -1,6 +1,7 @@
 import { useState, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../context/authContext";
+import { useToast } from "../context/toastContext";
 import { createLink } from "../services/linkServices";
 import { Button } from "../components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card";
@@ -30,6 +31,7 @@ function AddLinkPage() {
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const toast = useToast();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -42,9 +44,12 @@ function AddLinkPage() {
 
     try {
       await createLink({ ...formData, userId: user.id });
+      toast.success("Link added successfully!");
       navigate("/dashboard");
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to add link. Please try again.");
+      const msg = err.response?.data?.message || "Failed to add link. Please try again.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }

@@ -1,5 +1,6 @@
 import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../context/authContext";
+import { useToast } from "../context/toastContext";
 import { createLink } from "../services/linkServices";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -29,6 +30,7 @@ const PLATFORM_OPTIONS = [
 
 export default function AddLinkModal({ open, onOpenChange, onLinkAdded }) {
   const { user } = useContext(AuthContext);
+  const toast = useToast();
 
   const [formData, setFormData] = useState({
     platform: "GitHub",
@@ -61,10 +63,13 @@ export default function AddLinkModal({ open, onOpenChange, onLinkAdded }) {
 
     try {
       await createLink({ ...formData, userId: user.id });
+      toast.success("Link added successfully!");
       onOpenChange(false);
       if (onLinkAdded) onLinkAdded();
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to add link.");
+      const msg = err.response?.data?.message || "Failed to add link.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }

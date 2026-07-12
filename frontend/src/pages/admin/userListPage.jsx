@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../../context/authContext";
+import { useToast } from "../../context/toastContext";
 import { getAllUsers, deleteUser } from "../../services/adminServices";
 import { Button } from "../../components/ui/button";
 import ThemeDropdown from "../../components/ThemeDropdown";
@@ -18,6 +19,7 @@ function UsersListPage() {
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
   const [logoutConfirm, setLogoutConfirm] = useState(false);
+  const toast = useToast();
 
   const fetchUsers = async (searchTerm = "") => {
     try {
@@ -45,8 +47,13 @@ function UsersListPage() {
   };
 
   const handleDelete = async (id) => {
-    await deleteUser(id);
-    fetchUsers(search);
+    try {
+      await deleteUser(id);
+      toast.success("User deleted");
+      fetchUsers(search);
+    } catch (err) {
+      toast.error("Failed to delete user.");
+    }
   };
 
   const handleLogout = () => {

@@ -1,10 +1,12 @@
 import { useContext, useState, useEffect } from "react";
 import { AuthContext } from "../context/authContext";
+import { useToast } from "../context/toastContext";
 import api from "../services/api";
 import { isDark, applyTheme } from "../utils/theme";
 
 export default function ThemeDropdown() {
   const { user, login } = useContext(AuthContext);
+  const toast = useToast();
   const [dark, setDark] = useState(() => isDark(user?.theme));
 
   /* Keep local state in sync when user or external theme changes */
@@ -20,8 +22,9 @@ export default function ThemeDropdown() {
       login({ ...user, theme: newTheme });
       try {
         await api.put("/profile", { userId: user.id, theme: newTheme });
+        toast.success(`Switched to ${newTheme} mode`);
       } catch {
-        /* silently fail */
+        toast.error("Failed to save theme preference.");
       }
     } else {
       /* Guest: just toggle the class on <html> */

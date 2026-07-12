@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useToast } from "../context/toastContext";
 import { createUser } from "../services/adminServices";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -19,6 +20,7 @@ import {
 } from "./ui/dialog";
 
 export default function CreateUserModal({ open, onOpenChange, onUserCreated }) {
+  const toast = useToast();
   const fileInputRef = useRef(null);
   const [formData, setFormData] = useState({
     name: "",
@@ -66,10 +68,13 @@ export default function CreateUserModal({ open, onOpenChange, onUserCreated }) {
 
     try {
       await createUser(formData);
+      toast.success("User created successfully!");
       onOpenChange(false);
       if (onUserCreated) onUserCreated();
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to create user.");
+      const msg = err.response?.data?.message || "Failed to create user.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }

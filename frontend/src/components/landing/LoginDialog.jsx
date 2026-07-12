@@ -2,6 +2,7 @@ import { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { loginUser } from "../../services/authServices";
 import { AuthContext } from "../../context/authContext";
+import { useToast } from "../../context/toastContext";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
@@ -19,6 +20,7 @@ function LoginDialog({ open, onOpenChange, onSwitchToRegister, onSwitchToForgotP
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const { login } = useContext(AuthContext);
+  const toast = useToast();
   const navigate = useNavigate();
 
   const handleChange = (e) =>
@@ -31,10 +33,13 @@ function LoginDialog({ open, onOpenChange, onSwitchToRegister, onSwitchToForgotP
     try {
       const data = await loginUser(formData);
       login(data.user, rememberMe);
+      toast.success(`Welcome back, ${data.user.name}!`);
       onOpenChange(false);
       navigate(data.user.role === "admin" ? "/admin" : "/dashboard");
     } catch (err) {
-      setError(err.response?.data?.message || "Invalid email or password.");
+      const msg = err.response?.data?.message || "Invalid email or password.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }

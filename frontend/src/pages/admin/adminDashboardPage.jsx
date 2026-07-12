@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../../context/authContext";
+import { useToast } from "../../context/toastContext";
 import { getAllUsers, deleteUser } from "../../services/adminServices";
 import { Button } from "../../components/ui/button";
 import ThemeDropdown from "../../components/ThemeDropdown";
@@ -24,6 +25,7 @@ function AdminDashboardPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [detailUserId, setDetailUserId] = useState(null);
   const [logoutConfirm, setLogoutConfirm] = useState(false);
+  const toast = useToast();
   const LIMIT = 10;
 
   const fetchUsers = async (searchTerm = "", pageNum = 1) => {
@@ -59,8 +61,13 @@ function AdminDashboardPage() {
   };
 
   const handleDelete = async (id) => {
-    await deleteUser(id);
-    fetchUsers(search, page);
+    try {
+      await deleteUser(id);
+      toast.success("User deleted");
+      fetchUsers(search, page);
+    } catch (err) {
+      toast.error("Failed to delete user.");
+    }
   };
 
   const handleLogout = () => {

@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { QRCodeCanvas } from "qrcode.react";
+import { useToast } from "../context/toastContext";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
 
 function QrCard({ username }) {
+  const toast = useToast();
   const [copied, setCopied] = useState(false);
   const profileUrl = `${window.location.origin}/${username}`;
 
@@ -14,12 +16,14 @@ function QrCard({ username }) {
     link.href = url;
     link.download = `linkin-${username}-qr.png`;
     link.click();
+    toast.success("QR code downloaded!");
   };
 
   const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(profileUrl);
       setCopied(true);
+      toast.success("Profile link copied!");
       setTimeout(() => setCopied(false), 2000);
     } catch {
       // Fallback for older browsers
@@ -30,6 +34,7 @@ function QrCard({ username }) {
       document.execCommand("copy");
       document.body.removeChild(textarea);
       setCopied(true);
+      toast.success("Profile link copied!");
       setTimeout(() => setCopied(false), 2000);
     }
   };
@@ -38,6 +43,7 @@ function QrCard({ username }) {
     if (navigator.share) {
       try {
         await navigator.share({ title: "My LinkIn Profile", url: profileUrl });
+        toast.success("Shared successfully!");
       } catch { /* user cancelled */ }
     }
   };

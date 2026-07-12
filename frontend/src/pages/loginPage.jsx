@@ -2,6 +2,7 @@ import { useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { loginUser } from "../services/authServices";
 import { AuthContext } from "../context/authContext";
+import { useToast } from "../context/toastContext";
 import { Button } from "../components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card";
 import ThemeDropdown from "../components/ThemeDropdown";
@@ -11,6 +12,7 @@ function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const { login } = useContext(AuthContext);
+  const toast = useToast();
   const navigate = useNavigate();
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -22,9 +24,12 @@ function LoginPage() {
     try {
       const data = await loginUser(formData);
       login(data.user);
+      toast.success(`Welcome back, ${data.user.name}!`);
       navigate(data.user.role === "admin" ? "/admin" : "/dashboard");
     } catch (err) {
-      setError(err.response?.data?.message || "Invalid email or password.");
+      const msg = err.response?.data?.message || "Invalid email or password.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }

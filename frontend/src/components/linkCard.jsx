@@ -2,9 +2,11 @@ import { useState } from "react";
 import { Button } from "./ui/button";
 import PlatformIcon from "./PlatformIcon";
 import ConfirmDialog from "./ConfirmDialog";
+import { useToast } from "../context/toastContext";
 import { toggleLinkVisibility, toggleLinkPin } from "../services/linkServices";
 
 function LinkCard({ link, onDelete, onEdit, onRefresh }) {
+  const toast = useToast();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [hidden, setHidden] = useState(link.isHidden || false);
   const [pinned, setPinned] = useState(link.isPinned || false);
@@ -13,6 +15,7 @@ function LinkCard({ link, onDelete, onEdit, onRefresh }) {
     try {
       await toggleLinkVisibility(link._id, !hidden);
       setHidden(!hidden);
+      toast.success(hidden ? "Link is now visible" : "Link hidden from profile");
       if (onRefresh) onRefresh();
     } catch { /* silent */ }
   };
@@ -21,6 +24,7 @@ function LinkCard({ link, onDelete, onEdit, onRefresh }) {
     try {
       await toggleLinkPin(link._id, !pinned);
       setPinned(!pinned);
+      toast.success(pinned ? "Link unpinned" : "Link pinned to top");
       if (onRefresh) onRefresh();
     } catch { /* silent */ }
   };

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useToast } from "../context/toastContext";
 import { getUserDetails, updateUser } from "../services/adminServices";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -19,6 +20,7 @@ import {
 } from "./ui/dialog";
 
 export default function EditUserModal({ open, onOpenChange, userId, onUserUpdated }) {
+  const toast = useToast();
   const fileInputRef = useRef(null);
   const [formData, setFormData] = useState({
     name: "",
@@ -80,10 +82,13 @@ export default function EditUserModal({ open, onOpenChange, userId, onUserUpdate
 
     try {
       await updateUser(userId, formData);
+      toast.success("User updated successfully!");
       onOpenChange(false);
       if (onUserUpdated) onUserUpdated();
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to update user.");
+      const msg = err.response?.data?.message || "Failed to update user.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }

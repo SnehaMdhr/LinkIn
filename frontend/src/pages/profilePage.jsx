@@ -1,6 +1,7 @@
 import { useState, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../context/authContext";
+import { useToast } from "../context/toastContext";
 import api from "../services/api";
 import { Button } from "../components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card";
@@ -25,8 +26,8 @@ function ProfilePage() {
     theme: user?.theme || "light",
   });
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+  const toast = useToast();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -42,9 +43,11 @@ function ProfilePage() {
       const response = await api.put("/profile", { userId: user.id, ...formData });
       // Update context + localStorage with fresh data
       login({ ...user, ...response.data.user });
-      setSuccess("Profile updated successfully!");
+      toast.success("Profile updated successfully!");
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to update profile.");
+      const msg = err.response?.data?.message || "Failed to update profile.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -66,9 +69,7 @@ function ProfilePage() {
         {error && (
           <div className="bg-destructive/10 text-destructive text-sm rounded-md px-4 py-2 mb-4">{error}</div>
         )}
-        {success && (
-          <div className="bg-primary/10 text-primary text-sm rounded-md px-4 py-2 mb-4">{success}</div>
-        )}
+        
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

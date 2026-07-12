@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../../context/authContext";
+import { useToast } from "../../context/toastContext";
 import { getUserDetails, updateUserStatus, deleteUser } from "../../services/adminServices";
 import { Button } from "../../components/ui/button";
 import { Card, CardContent } from "../../components/ui/card";
@@ -19,6 +20,7 @@ function UserDetailsPage() {
   const [logoutConfirm, setLogoutConfirm] = useState(false);
   const [suspendConfirm, setSuspendConfirm] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const toast = useToast();
 
   const fetchDetails = async () => {
     try {
@@ -42,16 +44,19 @@ function UserDetailsPage() {
 
   const handleSuspend = async () => {
     await updateUserStatus(id, "suspended");
+    toast.success("User suspended");
     fetchDetails();
   };
 
   const handleActivate = async () => {
     await updateUserStatus(id, "active");
+    toast.success("User activated");
     fetchDetails();
   };
 
   const handleDelete = async () => {
     await deleteUser(id);
+    toast.success("User deleted");
     navigate("/admin");
   };
 

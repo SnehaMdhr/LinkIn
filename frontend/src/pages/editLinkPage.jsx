@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import api from "../services/api";
+import { useToast } from "../context/toastContext";
 import { updateLink } from "../services/linkServices";
 import { Button } from "../components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card";
@@ -31,6 +32,7 @@ function EditLinkPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
+  const toast = useToast();
 
   // Fetch existing link data on mount
   useEffect(() => {
@@ -67,9 +69,12 @@ function EditLinkPage() {
 
     try {
       await updateLink(id, formData);
+      toast.success("Link updated successfully!");
       navigate("/dashboard");
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to update link.");
+      const msg = err.response?.data?.message || "Failed to update link.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }

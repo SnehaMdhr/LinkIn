@@ -1,5 +1,6 @@
 import { useState, useRef, useContext } from "react";
 import { AuthContext } from "../context/authContext";
+import { useToast } from "../context/toastContext";
 import api from "../services/api";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -14,6 +15,7 @@ import {
 
 export default function ProfileEditModal({ open, onOpenChange }) {
   const { user, login } = useContext(AuthContext);
+  const toast = useToast();
   const fileInputRef = useRef(null);
 
   const [formData, setFormData] = useState({
@@ -53,9 +55,12 @@ export default function ProfileEditModal({ open, onOpenChange }) {
     try {
       const response = await api.put("/profile", { userId: user.id, ...formData });
       login({ ...user, ...response.data.user });
+      toast.success("Profile updated successfully!");
       onOpenChange(false);
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to update profile.");
+      const msg = err.response?.data?.message || "Failed to update profile.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }

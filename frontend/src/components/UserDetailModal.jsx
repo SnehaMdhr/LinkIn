@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useToast } from "../context/toastContext";
 import { getUserDetails, updateUserStatus, deleteUser } from "../services/adminServices";
 import { Button } from "./ui/button";
 import EditUserModal from "./EditUserModal";
@@ -11,6 +12,7 @@ import {
 } from "./ui/dialog";
 
 export default function UserDetailModal({ open, onOpenChange, userId, onRefresh }) {
+  const toast = useToast();
   const [details, setDetails] = useState(null);
   const [loading, setLoading] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -37,18 +39,21 @@ export default function UserDetailModal({ open, onOpenChange, userId, onRefresh 
 
   const handleSuspend = async () => {
     await updateUserStatus(userId, "suspended");
+    toast.success("User suspended");
     fetchDetails();
     if (onRefresh) onRefresh();
   };
 
   const handleActivate = async () => {
     await updateUserStatus(userId, "active");
+    toast.success("User activated");
     fetchDetails();
     if (onRefresh) onRefresh();
   };
 
   const handleDelete = async () => {
     await deleteUser(userId);
+    toast.success("User deleted");
     onOpenChange(false);
     if (onRefresh) onRefresh();
   };

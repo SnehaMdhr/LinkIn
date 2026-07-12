@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { registerUser } from "../../services/authServices";
+import { useToast } from "../../context/toastContext";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
@@ -22,6 +23,7 @@ function RegisterDialog({ open, onOpenChange, onSwitchToLogin }) {
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const toast = useToast();
   const navigate = useNavigate();
 
   const handleChange = (e) =>
@@ -40,10 +42,13 @@ function RegisterDialog({ open, onOpenChange, onSwitchToLogin }) {
     try {
       const { confirmPassword, ...dataToSend } = formData;
       await registerUser(dataToSend);
+      toast.success("Account created successfully! Please log in.");
       onOpenChange(false);
       navigate("/login");
     } catch (err) {
-      setError(err.response?.data?.message || "Something went wrong.");
+      const msg = err.response?.data?.message || "Something went wrong.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }

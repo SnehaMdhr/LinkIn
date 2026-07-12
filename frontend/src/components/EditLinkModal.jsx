@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../services/api";
+import { useToast } from "../context/toastContext";
 import { updateLink } from "../services/linkServices";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -27,6 +28,7 @@ const PLATFORM_OPTIONS = [
 ];
 
 export default function EditLinkModal({ open, onOpenChange, linkId, onLinkUpdated }) {
+  const toast = useToast();
   const [formData, setFormData] = useState({
     platform: "GitHub",
     title: "",
@@ -79,10 +81,13 @@ export default function EditLinkModal({ open, onOpenChange, linkId, onLinkUpdate
 
     try {
       await updateLink(linkId, formData);
+      toast.success("Link updated successfully!");
       onOpenChange(false);
       if (onLinkUpdated) onLinkUpdated();
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to update link.");
+      const msg = err.response?.data?.message || "Failed to update link.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }

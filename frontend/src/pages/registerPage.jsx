@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { registerUser } from "../services/authServices";
+import { useToast } from "../context/toastContext";
 import { Button } from "../components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card";
 import ThemeDropdown from "../components/ThemeDropdown";
@@ -9,6 +10,7 @@ function RegisterPage() {
   const [f, setF] = useState({ name: "", email: "", username: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const toast = useToast();
   const navigate = useNavigate();
 
   const h = (e) => setF({ ...f, [e.target.name]: e.target.value });
@@ -18,9 +20,12 @@ function RegisterPage() {
     setLoading(true);
     try {
       await registerUser(f);
+      toast.success("Account created successfully! Please log in.");
       navigate("/login");
     } catch (err) {
-      setError(err.response?.data?.message || "Something went wrong.");
+      const msg = err.response?.data?.message || "Something went wrong.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
