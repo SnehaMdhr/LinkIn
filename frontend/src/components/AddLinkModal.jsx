@@ -20,6 +20,8 @@ import {
   DialogDescription,
 } from "./ui/dialog";
 
+const CATEGORY_OPTIONS = ["Social Media", "Portfolio", "Resume", "Business", "Others"];
+
 const PLATFORM_OPTIONS = [
   "GitHub", "LinkedIn", "Instagram", "Facebook",
   "TikTok", "YouTube", "Portfolio", "Website", "Other",
@@ -33,6 +35,9 @@ export default function AddLinkModal({ open, onOpenChange, onLinkAdded }) {
     title: "",
     url: "",
     position: 0,
+    category: "Others",
+    isPinned: false,
+    isHidden: false,
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -40,7 +45,7 @@ export default function AddLinkModal({ open, onOpenChange, onLinkAdded }) {
   /* Reset form whenever the modal opens */
   useEffect(() => {
     if (open) {
-      setFormData({ platform: "GitHub", title: "", url: "", position: 0 });
+      setFormData({ platform: "GitHub", title: "", url: "", position: 0, category: "Others", isPinned: false, isHidden: false });
       setError("");
     }
   }, [open]);
@@ -127,15 +132,41 @@ export default function AddLinkModal({ open, onOpenChange, onLinkAdded }) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="position">Position (display order)</Label>
-            <Input
-              id="position"
-              name="position"
-              type="number"
-              min="0"
-              value={formData.position}
-              onChange={handleChange}
-            />
+            <Label>Category</Label>
+            <Select
+              value={formData.category}
+              onValueChange={(value) => setFormData({ ...formData, category: value })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {CATEGORY_OPTIONS.map((c) => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex items-center gap-4 pt-1">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.isPinned}
+                onChange={(e) => setFormData({ ...formData, isPinned: e.target.checked })}
+                className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
+              />
+              <span className="text-sm text-muted-foreground">Pin to top</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.isHidden}
+                onChange={(e) => setFormData({ ...formData, isHidden: e.target.checked })}
+                className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
+              />
+              <span className="text-sm text-muted-foreground">Hide from profile</span>
+            </label>
           </div>
 
           <div className="flex gap-3 pt-2">

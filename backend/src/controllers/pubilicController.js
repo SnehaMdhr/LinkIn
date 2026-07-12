@@ -13,7 +13,7 @@ export const getPublicProfile = async (req, res) => {
       return res.status(404).json({ message: "Profile not found" });
     }
 
-    const links = await Link.find({ userId: user._id }).sort({ position: 1 });
+    const links = await Link.find({ userId: user._id, isHidden: false }).sort({ isPinned: -1, position: 1 });
 
     res.status(200).json({ user, links });
   } catch (error) {

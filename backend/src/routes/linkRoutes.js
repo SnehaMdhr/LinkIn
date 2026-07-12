@@ -1,10 +1,11 @@
 import express from "express";
-import { getLinks, createLink, updateLink, deleteLink,getLinkById } from "../controllers/linkController.js";
+import { getLinks, createLink, updateLink, deleteLink, getLinkById, reorderLinks } from "../controllers/linkController.js";
 
 const router = express.Router();
 
 router.get("/", getLinks);
 router.post("/", createLink);
+router.put("/reorder", reorderLinks);
 router.put("/:id", updateLink);
 router.get("/single/:id", getLinkById); 
 router.delete("/:id", deleteLink);

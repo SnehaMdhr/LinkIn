@@ -23,3 +23,19 @@ export const deleteLink = async (id) => {
   const response = await api.delete(`/links/${id}`);
   return response.data;
 };
+
+// @desc  Reorder links
+export const toggleLinkVisibility = async (id, isHidden) => {
+  const response = await api.put(`/links/${id}`, { isHidden });
+  return response.data;
+};
+
+export const toggleLinkPin = async (id, isPinned) => {
+  const response = await api.put(`/links/${id}`, { isPinned });
+  return response.data;
+};
+
+export const reorderLinks = async (items) => {
+  const response = await api.put("/links/reorder", { items });
+  return response.data;
+};

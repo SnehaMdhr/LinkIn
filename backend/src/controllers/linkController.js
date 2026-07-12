@@ -10,7 +10,7 @@ export const getLinks = async (req, res) => {
       return res.status(400).json({ message: "userId is required" });
     }
 
-    const links = await Link.find({ userId }).sort({ position: 1 });
+    const links = await Link.find({ userId }).sort({ isPinned: -1, position: 1 });
     res.status(200).json(links);
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
@@ -21,13 +21,13 @@ export const getLinks = async (req, res) => {
 // @route POST /api/links
 export const createLink = async (req, res) => {
   try {
-    const { userId, platform, title, url, position } = req.body;
+    const { userId, platform, title, url, position, isHidden, isPinned, category } = req.body;
 
     if (!userId || !platform || !title || !url) {
       return res.status(400).json({ message: "userId, platform, title, and url are required" });
     }
 
-    const link = await Link.create({ userId, platform, title, url, position });
+    const link = await Link.create({ userId, platform, title, url, position, isHidden, isPinned, category });
     res.status(201).json({ message: "Link created", link });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
@@ -39,11 +39,11 @@ export const createLink = async (req, res) => {
 export const updateLink = async (req, res) => {
   try {
     const { id } = req.params;
-    const { platform, title, url, position } = req.body;
+    const { platform, title, url, position, isHidden, isPinned, category } = req.body;
 
     const updatedLink = await Link.findByIdAndUpdate(
       id,
-      { platform, title, url, position },
+      { platform, title, url, position, isHidden, isPinned, category },
       { new: true, runValidators: true }
     );
 
@@ -69,6 +69,27 @@ export const deleteLink = async (req, res) => {
     }
 
     res.status(200).json({ message: "Link deleted" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// @desc  Reorder links (bulk update positions)
+// @route PUT /api/links/reorder
+export const reorderLinks = async (req, res) => {
+  try {
+    const { items } = req.body; // [{ _id, position }, ...]
+
+    if (!items || !Array.isArray(items)) {
+      return res.status(400).json({ message: "items array is required" });
+    }
+
+    const updates = items.map(({ _id, position }) => ({
+      updateOne: { filter: { _id }, update: { position } },
+    }));
+
+    await Link.bulkWrite(updates);
+    res.status(200).json({ message: "Links reordered" });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }

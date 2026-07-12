@@ -20,6 +20,7 @@ import {
   DialogDescription,
 } from "./ui/dialog";
 
+const CATEGORY_OPTIONS = ["Social Media", "Portfolio", "Resume", "Business", "Others"];
 const PLATFORM_OPTIONS = [
   "GitHub", "LinkedIn", "Instagram", "Facebook",
   "TikTok", "YouTube", "Portfolio", "Website", "Other",
@@ -31,6 +32,9 @@ export default function EditLinkModal({ open, onOpenChange, linkId, onLinkUpdate
     title: "",
     url: "",
     position: 0,
+    category: "Others",
+    isPinned: false,
+    isHidden: false,
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -38,17 +42,21 @@ export default function EditLinkModal({ open, onOpenChange, linkId, onLinkUpdate
 
   useEffect(() => {
     if (open && linkId) {
-      setFormData({ platform: "GitHub", title: "", url: "", position: 0 });
+      setFormData({ platform: "GitHub", title: "", url: "", position: 0, category: "Others", isPinned: false, isHidden: false });
       setError("");
       setFetching(true);
 
       api.get(`/links/single/${linkId}`)
         .then((res) => {
+          const d = res.data;
           setFormData({
-            platform: res.data.platform,
-            title: res.data.title,
-            url: res.data.url,
-            position: res.data.position,
+            platform: d.platform || "GitHub",
+            title: d.title || "",
+            url: d.url || "",
+            position: d.position ?? 0,
+            category: d.category || "Others",
+            isPinned: d.isPinned || false,
+            isHidden: d.isHidden || false,
           });
         })
         .catch(() => {
@@ -85,15 +93,11 @@ export default function EditLinkModal({ open, onOpenChange, linkId, onLinkUpdate
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Edit Link</DialogTitle>
-          <DialogDescription>
-            Update your link details and position.
-          </DialogDescription>
+          <DialogDescription>Update your link details, category, and visibility.</DialogDescription>
         </DialogHeader>
 
         {error && (
-          <div className="bg-destructive/10 text-destructive text-sm rounded-md px-4 py-2">
-            {error}
-          </div>
+          <div className="bg-destructive/10 text-destructive text-sm rounded-md px-4 py-2">{error}</div>
         )}
 
         {fetching ? (
@@ -102,20 +106,12 @@ export default function EditLinkModal({ open, onOpenChange, linkId, onLinkUpdate
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label>Platform</Label>
-              <Select
-                value={formData.platform}
-                onValueChange={(value) => setFormData({ ...formData, platform: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
+              <Select value={formData.platform} onValueChange={(v) => setFormData({ ...formData, platform: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {PLATFORM_OPTIONS.map((p) => (
                     <SelectItem key={p} value={p}>
-                      <span className="flex items-center gap-2">
-                        <PlatformIcon platform={p} className="w-4 h-4" />
-                        {p}
-                      </span>
+                      <span className="flex items-center gap-2"><PlatformIcon platform={p} className="w-4 h-4" />{p}</span>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -124,50 +120,46 @@ export default function EditLinkModal({ open, onOpenChange, linkId, onLinkUpdate
 
             <div className="space-y-2">
               <Label htmlFor="edit-title">Title</Label>
-              <Input
-                id="edit-title"
-                name="title"
-                value={formData.title}
-                onChange={handleChange}
-                placeholder="My GitHub Profile"
-              />
+              <Input id="edit-title" name="title" value={formData.title} onChange={handleChange} />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="edit-url">URL</Label>
-              <Input
-                id="edit-url"
-                name="url"
-                value={formData.url}
-                onChange={handleChange}
-                placeholder="https://github.com/yourname"
-              />
+              <Input id="edit-url" name="url" value={formData.url} onChange={handleChange} />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-position">Position (display order)</Label>
-              <Input
-                id="edit-position"
-                name="position"
-                type="number"
-                min="0"
-                value={formData.position}
-                onChange={handleChange}
-              />
+              <Label>Category</Label>
+              <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {CATEGORY_OPTIONS.map((c) => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center gap-4 pt-1">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={formData.isPinned}
+                  onChange={(e) => setFormData({ ...formData, isPinned: e.target.checked })}
+                  className="w-4 h-4 rounded border-border text-primary focus:ring-primary" />
+                <span className="text-sm text-muted-foreground">Pinned</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={formData.isHidden}
+                  onChange={(e) => setFormData({ ...formData, isHidden: e.target.checked })}
+                  className="w-4 h-4 rounded border-border text-primary focus:ring-primary" />
+                <span className="text-sm text-muted-foreground">Hidden</span>
+              </label>
             </div>
 
             <div className="flex gap-3 pt-2">
               <Button type="submit" disabled={loading} className="flex-1">
                 {loading ? "Saving..." : "Save Changes"}
               </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="flex-1"
-                onClick={() => onOpenChange(false)}
-              >
-                Cancel
-              </Button>
+              <Button type="button" variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>Cancel</Button>
             </div>
           </form>
         )}

@@ -23,6 +23,18 @@ const linkSchema = new mongoose.Schema(
       type: Number,
       default: 0, // used for ordering links on the public profile
     },
+    isHidden: {
+      type: Boolean,
+      default: false,
+    },
+    isPinned: {
+      type: Boolean,
+      default: false,
+    },
+    category: {
+      type: String,
+      default: "Others",
+    },
   },
   {
     timestamps: { createdAt: true, updatedAt: false }, // only need createdAt per your spec
