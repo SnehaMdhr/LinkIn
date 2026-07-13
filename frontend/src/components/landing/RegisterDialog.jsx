@@ -33,6 +33,13 @@ function RegisterDialog({ open, onOpenChange, onSwitchToLogin }) {
     e.preventDefault();
     setError("");
 
+    // Client-side validation for all fields
+    const { name, email, username, password, confirmPassword } = formData;
+    if (!name.trim() || !email.trim() || !username.trim() || !password.trim() || !confirmPassword.trim()) {
+      setError("Please fill in all fields.");
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match.");
       return;

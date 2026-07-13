@@ -3,11 +3,9 @@ import { useSearchParams } from "react-router-dom";
 import {
   Navbar,
   Hero,
-  TrustedBy,
   Features,
   HowItWorks,
   DashboardShowcase,
-  Stats,
   Testimonials,
   FAQ,
   CTA,
@@ -52,11 +50,9 @@ function LandingPage() {
       <Navbar onLoginOpen={openLogin} onRegisterOpen={openRegister} />
       <main>
         <Hero onRegisterOpen={openRegister} />
-        <TrustedBy />
         <Features />
         <HowItWorks />
         <DashboardShowcase />
-        <Stats />
         <Testimonials />
         <FAQ />
         <CTA onRegisterOpen={openRegister} />
