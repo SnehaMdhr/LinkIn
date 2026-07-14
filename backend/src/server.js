@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
-
+import morgan from "morgan";
 import authRoutes from "./routes/authRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
 import linkRoutes from "./routes/linkRoutes.js";
@@ -15,7 +15,7 @@ dotenv.config();
 connectDB();
 
 const app = express();
-
+app.use(morgan()); // Log HTTP requests to the console
 // Basic middleware (functionality only, no security hardening yet)
 app.use(cors());
 app.use(express.json({ limit: "5mb" }));

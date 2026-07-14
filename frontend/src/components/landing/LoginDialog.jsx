@@ -29,6 +29,12 @@ function LoginDialog({ open, onOpenChange, onSwitchToRegister, onSwitchToForgotP
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    if (!formData.email.trim() || !formData.password.trim()) {
+      setError("Please fill in all fields.");
+      return;
+    }
+
     setLoading(true);
     try {
       const data = await loginUser(formData);

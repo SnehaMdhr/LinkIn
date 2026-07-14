@@ -5,17 +5,13 @@ import User from "../models/user.js";
 // @route POST /api/auth/register
 export const registerUser = async (req, res) => {
   try {
-    const { name, email, password, confirmPassword, username: rawUsername } = req.body;
+    const { name, email, password, username: rawUsername } = req.body;
     const username = rawUsername?.trim();
     const trimmedEmail = email?.trim();
     const trimmedName = name?.trim();
 
-    if (!username || !trimmedEmail || !trimmedName || !password || !confirmPassword) {
+    if (!username || !trimmedEmail || !trimmedName || !password) {
       return res.status(400).json({ message: "All fields are required" });
-    }
-
-    if (password !== confirmPassword) {
-      return res.status(400).json({ message: "Passwords do not match" });
     }
 
     // Check if user already exists

@@ -14,8 +14,6 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: true,
-      // NOTE: stored as plain text for now (Day 1, no security).
-      // bcrypt hashing will be added in Phase 2.
     },
     username: {
       type: String,

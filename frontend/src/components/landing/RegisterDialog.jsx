@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { registerUser } from "../../services/authServices";
 import { useToast } from "../../context/toastContext";
 import { Button } from "../ui/button";
@@ -24,7 +23,6 @@ function RegisterDialog({ open, onOpenChange, onSwitchToLogin }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const toast = useToast();
-  const navigate = useNavigate();
 
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -32,6 +30,13 @@ function RegisterDialog({ open, onOpenChange, onSwitchToLogin }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    // Client-side validation for all fields
+    const { name, email, username, password, confirmPassword } = formData;
+    if (!name.trim() || !email.trim() || !username.trim() || !password.trim() || !confirmPassword.trim()) {
+      setError("Please fill in all fields.");
+      return;
+    }
 
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match.");
@@ -44,7 +49,7 @@ function RegisterDialog({ open, onOpenChange, onSwitchToLogin }) {
       await registerUser(dataToSend);
       toast.success("Account created successfully! Please log in.");
       onOpenChange(false);
-      navigate("/login");
+      onSwitchToLogin();
     } catch (err) {
       const msg = err.response?.data?.message || "Something went wrong.";
       setError(msg);
