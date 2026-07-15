@@ -21,9 +21,9 @@ const iconMap = {
   other: FaLink,
 };
 
-export default function PlatformIcon({ platform, className = "w-4 h-4" }) {
+export default function PlatformIcon({ platform, className = "w-4 h-4", style }) {
   const key = platform?.toLowerCase().trim();
   const Icon = iconMap[key] || FaLink;
 
-  return <Icon className={className} />;
+  return <Icon className={className} style={style} />;
 }

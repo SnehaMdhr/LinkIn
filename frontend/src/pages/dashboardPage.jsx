@@ -99,6 +99,9 @@ function DashboardPage() {
           <Button variant="outline" size="sm" onClick={() => setProfileOpen(true)}>
             Edit Profile
           </Button>
+          <Button variant="outline" size="sm" onClick={() => navigate("/customize-profile")}>
+            Customize Profile
+          </Button>
           <Button variant="ghost" size="sm" onClick={() => setLogoutConfirm(true)} className="text-destructive hover:text-destructive">
             Logout
           </Button>

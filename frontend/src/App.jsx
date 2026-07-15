@@ -7,6 +7,7 @@ import ForgotPasswordPage from "./pages/forgotPasswordPage";
 import ResetPasswordPage from "./pages/resetPasswordPage";
 import DashboardPage from "./pages/dashboardPage";
 import ProfilePage from "./pages/profilePage";
+import CustomizeProfilePage from "./pages/customizeProfilePage";
 import AddLinkPage from "./pages/addLinkPage";
 import EditLinkPage from "./pages/editLinkPage";
 import PublicProfilePage from "./pages/publicProfilePage";
@@ -29,6 +30,7 @@ function App() {
       {/* User routes (no auth protection yet — Day 1) */}
       <Route path="/dashboard" element={<DashboardPage />} />
       <Route path="/profile" element={<ProfilePage />} />
+      <Route path="/customize-profile" element={<CustomizeProfilePage />} />
       <Route path="/links/add" element={<AddLinkPage />} />
       <Route path="/links/edit/:id" element={<EditLinkPage />} />
 

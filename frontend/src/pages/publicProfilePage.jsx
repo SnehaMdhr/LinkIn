@@ -4,10 +4,52 @@ import { QRCodeCanvas } from "qrcode.react";
 import api from "../services/api";
 import PlatformIcon from "../components/PlatformIcon";
 import { trackProfileView } from "../services/analyticsServices";
+import { DEFAULT_CUSTOMIZATION, getGradientCSS, getBlurValue } from "../config/customization";
+import { loadFont, getFontFamily } from "../utils/fonts";
+
+function getAvatarClasses(shape) {
+  if (shape === "rounded") return "rounded-2xl";
+  if (shape === "square") return "rounded-none";
+  return "rounded-full";
+}
+
+function getButtonClasses(style, width, animation, btnTextColor) {
+  const widthMap = {
+    auto: "w-auto px-8",
+    medium: "w-3/4",
+    large: "w-5/6",
+    full: "w-full",
+  };
+
+  const tc = btnTextColor || "#000000";
+
+  const base = `py-3.5 px-6 text-sm font-semibold transition-all duration-200 ${
+    widthMap[width] || "w-full"
+  }`;
+
+  const animClass =
+    animation === "lift"
+      ? "hover:-translate-y-1 hover:shadow-lg"
+      : animation === "scale"
+      ? "hover:scale-105"
+      : animation === "glow"
+      ? "hover:shadow-lg hover:shadow-primary/20"
+      : "";
+
+  const styleMap = {
+    pill: `${base} rounded-full ${animClass}`,
+    rounded: `${base} rounded-xl ${animClass}`,
+    square: `${base} rounded-md ${animClass}`,
+    outline: `${base} rounded-full border-2 bg-transparent ${animClass}`,
+    soft: `${base} rounded-xl shadow-md ${animClass}`,
+    glass: `${base} rounded-xl backdrop-blur-sm bg-white/10 border border-white/20 ${animClass}`,
+  };
+
+  return styleMap[style] || styleMap.pill;
+}
 
 function PublicProfilePage() {
   const { username } = useParams();
-
   const [profile, setProfile] = useState(null);
   const [notFound, setNotFound] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -19,7 +61,6 @@ function PublicProfilePage() {
         setNotFound(false);
         const response = await api.get(`/user/${username}`);
         setProfile(response.data);
-        // Track profile view
         if (response.data?.user?._id) {
           trackProfileView(response.data.user._id).catch(() => {});
         }
@@ -34,7 +75,6 @@ function PublicProfilePage() {
     fetchProfile();
   }, [username]);
 
-  // --- Loading state ---
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-white to-emerald-50 dark:from-gray-950 dark:via-gray-900 dark:to-emerald-950">
@@ -46,7 +86,6 @@ function PublicProfilePage() {
     );
   }
 
-  // --- Not found state ---
   if (notFound || !profile) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-green-50 via-white to-emerald-50 dark:from-gray-950 dark:via-gray-900 dark:to-emerald-950 px-4">
@@ -66,68 +105,119 @@ function PublicProfilePage() {
   }
 
   const { user, links } = profile;
+  const c = { ...DEFAULT_CUSTOMIZATION, ...(user.profileCustomization || {}) };
+
+  loadFont(c.font);
+
+  const tc = c.textColor || "#000000";
+  const tcs = c.textColorSecondary || "#6b7280";
+
+  const backgroundStyle = (() => {
+    if (c.backgroundType === "solid") return { backgroundColor: c.backgroundColor };
+    if (c.backgroundType === "gradient") return { background: getGradientCSS(c.backgroundGradient, c.customGradientFrom, c.customGradientTo) };
+    if (c.backgroundType === "image" && c.backgroundImage)
+      return {
+        backgroundImage: `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url(${c.backgroundImage})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+      };
+    return { background: getGradientCSS("lime-emerald") };
+  })();
+
+  const cardStyle = {
+    background: `rgba(255,255,255,${c.cardOpacity / 100})`,
+    backdropFilter: `blur(${getBlurValue(c.cardBlur)})`,
+    WebkitBackdropFilter: `blur(${getBlurValue(c.cardBlur)})`,
+    border: `${c.cardBorderWidth || "1px"} solid ${c.cardBorderColor || "#ffffff"}`,
+  };
+
+  const animClass =
+    c.animation === "fade"
+      ? "animate-md-fade-in"
+      : c.animation === "slide"
+      ? "animate-[slide-up_500ms_ease-out]"
+      : "";
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center px-4 py-12 overflow-hidden bg-gradient-to-br from-green-50 via-white to-emerald-50 dark:from-gray-950 dark:via-gray-900 dark:to-emerald-950">
-
-      {/* ANIMATED BACKGROUND DECORATIVE BLOBS */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden select-none">
-        {/* Top-left large blob */}
-        <div
-          className="absolute -top-32 -left-32 w-96 h-96 rounded-full opacity-20 blur-3xl animate-md-drift"
-          style={{ background: "radial-gradient(circle, rgba(175,243,62,0.5) 0%, rgba(16,185,129,0.3) 50%, transparent 70%)" }}
-        />
-        {/* Top-right medium blob */}
-        <div
-          className="absolute -top-20 -right-20 w-80 h-80 rounded-full opacity-15 blur-3xl animate-md-drift-slow"
-          style={{ background: "radial-gradient(circle, rgba(52,211,153,0.5) 0%, rgba(5,150,105,0.2) 50%, transparent 70%)" }}
-        />
-        {/* Bottom-left small blob */}
-        <div
-          className="absolute -bottom-16 left-1/4 w-64 h-64 rounded-full opacity-10 blur-3xl animate-md-drift"
-          style={{ background: "radial-gradient(circle, rgba(16,185,129,0.4) 0%, transparent 70%)", animationDelay: "-3s" }}
-        />
-        {/* Bottom-right accent blob */}
-        <div
-          className="absolute -bottom-24 -right-16 w-72 h-72 rounded-full opacity-15 blur-3xl animate-md-drift-slow"
-          style={{ background: "radial-gradient(circle, rgba(175,243,62,0.3) 0%, transparent 70%)", animationDelay: "-7s" }}
-        />
-        {/* Center subtle glow */}
-        <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-[0.04] blur-[100px]"
-          style={{ background: "radial-gradient(circle, rgba(175,243,62,1) 0%, transparent 70%)" }}
-        />
-      </div>
-
-      {/* CONTENT */}
-      <div className="relative z-10 w-full max-w-sm text-center animate-md-fade-in">
+    <div
+      className="relative min-h-screen flex flex-col items-center px-4 py-12 overflow-hidden"
+      style={{ ...backgroundStyle, fontFamily: getFontFamily(c.font) }}
+    >
+      <div className="relative z-10 w-full max-w-sm text-center">
 
         {/* ---- PROFILE CARD ---- */}
-        <div className="bg-card/70 backdrop-blur-xl border border-border/50 rounded-2xl shadow-lg shadow-black/5 p-8 mb-6 transition-shadow duration-300 hover:shadow-xl hover:shadow-black/5">
+        <div className={`rounded-2xl shadow-lg shadow-black/5 p-8 mb-6 transition-shadow duration-300 hover:shadow-xl hover:shadow-black/5 ${animClass}`} style={cardStyle}>
 
-          {/* Avatar */}
-          <div className="w-24 h-24 mx-auto rounded-full bg-primary/20 flex items-center justify-center text-3xl font-bold text-primary overflow-hidden ring-4 ring-primary/20 transition-transform duration-300 hover:scale-105">
-            {user.profileImage ? (
-              <img src={user.profileImage} alt={user.name} className="w-full h-full object-cover" />
-            ) : (
-              user.name?.charAt(0).toUpperCase() || "U"
-            )}
-          </div>
+          {/* Banner layout extra header */}
+          {c.layout === "banner" && (
+            <div
+              className="w-full h-24 -mx-8 -mt-8 mb-4 rounded-t-2xl"
+              style={{ background: `linear-gradient(135deg, ${c.accentColor}44, ${c.accentColor}11)` }}
+            />
+          )}
 
-          {/* Name & username */}
-          <h1 className="text-2xl font-bold text-foreground mt-5">{user.name}</h1>
-          <p className="text-muted-foreground text-sm">@{user.username}</p>
+          {/* Classic & Banner: centered avatar */}
+          {(c.layout === "classic" || c.layout === "banner") && c.showProfilePicture && (
+            <div
+              className={`w-24 h-24 mx-auto flex items-center justify-center text-3xl font-bold overflow-hidden ring-4 transition-transform duration-300 hover:scale-105 ${getAvatarClasses(
+                c.avatarShape
+              )}`}
+              style={{ backgroundColor: `${c.accentColor}33`, color: c.accentColor }}
+            >
+              {user.profileImage ? (
+                <img src={user.profileImage} alt={user.name} className="w-full h-full object-cover" />
+              ) : (
+                user.name?.charAt(0).toUpperCase() || "U"
+              )}
+            </div>
+          )}
+
+          {/* Side-by-side layout */}
+          {c.layout === "side-by-side" && (
+            <div className="flex items-center gap-4 mb-2">
+              {c.showProfilePicture && (
+                <div
+                  className={`w-16 h-16 shrink-0 flex items-center justify-center text-2xl font-bold overflow-hidden ${getAvatarClasses(
+                    c.avatarShape
+                  )}`}
+                  style={{ backgroundColor: `${c.accentColor}33`, color: c.accentColor }}
+                >
+                  {user.profileImage ? (
+                    <img src={user.profileImage} alt={user.name} className="w-full h-full object-cover" />
+                  ) : (
+                    user.name?.charAt(0).toUpperCase() || "U"
+                  )}
+                </div>
+              )}
+              <div className="text-left">
+                <h1 className="text-2xl font-bold" style={{ color: tc }}>{user.name}</h1>
+                <p className="text-sm" style={{ color: tcs }}>@{user.username}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Classic & Banner: name below avatar */}
+          {(c.layout === "classic" || c.layout === "banner") && (
+            <>
+              <h1 className="text-2xl font-bold mt-5" style={{ color: tc }}>{user.name}</h1>
+              <p className="text-sm" style={{ color: tcs }}>@{user.username}</p>
+            </>
+          )}
 
           {/* Bio */}
-          {user.bio && (
-            <p className="mt-3 text-sm text-muted-foreground/80 leading-relaxed max-w-xs mx-auto">
+          {c.showBio && user.bio && (
+            <p className="mt-3 text-sm leading-relaxed max-w-xs mx-auto" style={{ color: tcs }}>
               {user.bio}
             </p>
           )}
 
-          {/* Badge row */}
+          {/* Badge */}
           <div className="flex items-center justify-center gap-2 mt-4">
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-primary/10 text-primary">
+            <span
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium"
+              style={{ backgroundColor: `${c.accentColor}22`, color: c.accentColor }}
+            >
               <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
               Available
             </span>
@@ -135,10 +225,10 @@ function PublicProfilePage() {
         </div>
 
         {/* ---- LINKS SECTION ---- */}
-        <div className="space-y-3">
+        <div className={`space-y-3 ${c.linkAlignment === "left" ? "text-left" : ""}`}>
           {links.length === 0 ? (
-            <div className="bg-card/40 backdrop-blur-sm border border-border/30 rounded-xl py-8 px-4">
-              <p className="text-sm text-muted-foreground/50">No links added yet.</p>
+            <div className="backdrop-blur-sm border border-white/20 rounded-xl py-8 px-4" style={{ background: `rgba(255,255,255,${c.cardOpacity / 100})` }}>
+              <p className="text-sm" style={{ color: `${tcs}88` }}>No links added yet.</p>
             </div>
           ) : (
             links.map((link, index) => (
@@ -147,21 +237,38 @@ function PublicProfilePage() {
                 href={link.url}
                 target="_blank"
                 rel="noreferrer"
-                className="group block w-full bg-card/70 backdrop-blur-xl border border-border/50 rounded-xl py-4 px-5 font-medium transition-all duration-200 text-foreground hover:bg-card hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 active:translate-y-0"
-                style={{ animationDelay: `${index * 60}ms` }}
+                className={`block font-medium transition-all duration-200 py-4 px-5 ${getButtonClasses(
+                  c.buttonStyle,
+                  c.buttonWidth,
+                  c.buttonAnimation,
+                  c.buttonTextColor
+                )}`}
+                style={{
+                  backgroundColor: c.buttonStyle === "outline" ? "transparent" : c.buttonStyle === "glass" ? "rgba(255,255,255,0.1)" : c.accentColor,
+                  borderColor: c.buttonStyle === "outline" ? c.accentColor : undefined,
+                  color: c.buttonTextColor || "#000000",
+                  animationDelay: `${index * 60}ms`,
+                  ...(c.buttonStyle === "glass" ? { backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.2)" } : {}),
+                }}
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-110 group-hover:bg-primary/20">
-                    <PlatformIcon platform={link.platform} className="w-5 h-5 text-primary" />
-                  </div>
-                  <div className="text-left min-w-0 flex-1">
+                <div className={`flex items-center gap-4 ${c.linkAlignment === "left" ? "" : "justify-center"}`}>
+                  {c.showIcons && (
+                    <div
+                      className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-110"
+                      style={{ backgroundColor: `${c.accentColor}22` }}
+                    >
+                      <PlatformIcon platform={link.platform} className="w-5 h-5" style={{ color: c.buttonTextColor || "#000000" }} />
+                    </div>
+                  )}
+                  <div className={`text-left min-w-0 flex-1 ${c.linkAlignment === "center" ? "text-center" : ""}`}>
                     <p className="truncate font-semibold">{link.title}</p>
-                    <span className="block text-xs text-muted-foreground/60 mt-0.5 capitalize">
+                    <span className="block text-xs mt-0.5 capitalize" style={{ color: `${tcs}99` }}>
                       {link.platform || "link"}
                     </span>
                   </div>
                   <svg
-                    className="w-4 h-4 text-muted-foreground/40 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-primary"
+                    className="w-4 h-4 transition-all duration-200 group-hover:translate-x-0.5"
+                    style={{ color: `${tcs}66` }}
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -176,12 +283,20 @@ function PublicProfilePage() {
         </div>
 
         {/* ---- QR CODE ---- */}
-        <div className="mt-8">
-          <div className="bg-card/40 backdrop-blur-sm border border-border/30 rounded-xl p-4 inline-flex flex-col items-center">
-            <p className="text-[10px] text-muted-foreground/50 mb-2 uppercase tracking-wider">Scan to share</p>
-            <QRCodeCanvas value={`${window.location.origin}/${username}`} size={80} />
+        {c.showQr && (
+          <div
+            className={`mt-8 ${
+              c.qrPosition === "floating"
+                ? "fixed bottom-6 right-6"
+                : ""
+            }`}
+          >
+            <div className="backdrop-blur-sm border border-white/20 rounded-xl p-4 inline-flex flex-col items-center" style={{ background: `rgba(255,255,255,${c.cardOpacity / 100})` }}>
+              <p className="text-[10px] mb-2 uppercase tracking-wider" style={{ color: tcs }}>Scan to share</p>
+              <QRCodeCanvas value={`${window.location.origin}/${username}`} size={80} />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* ---- FOOTER ---- */}
         <p className="mt-8 text-xs text-muted-foreground/30 transition-colors duration-200 hover:text-muted-foreground/60">
