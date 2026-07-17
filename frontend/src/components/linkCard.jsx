@@ -52,8 +52,12 @@ function LinkCard({ link, onDelete, onEdit, onRefresh }) {
         <button onClick={handleTogglePin} className="p-1.5 rounded-md hover:bg-muted transition-colors text-sm" title={pinned ? "Unpin" : "Pin"}>
           {pinned ? "📌" : "📍"}
         </button>
-        <button onClick={handleToggleHidden} className="p-1.5 rounded-md hover:bg-muted transition-colors text-sm" title={hidden ? "Show" : "Hide"}>
-          {hidden ? "👁️" : "🙈"}
+        <button
+          onClick={handleToggleHidden}
+          className={`relative w-9 h-5 rounded-full transition-colors ${hidden ? "bg-muted" : "bg-primary"}`}
+          title={hidden ? "Show" : "Hide"}
+        >
+          <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${hidden ? "translate-x-0" : "translate-x-4"}`} />
         </button>
         <Button variant="ghost" size="sm" onClick={() => onEdit(link._id)}>Edit</Button>
         <Button variant="ghost" size="sm" onClick={() => setConfirmOpen(true)} className="text-destructive hover:text-destructive">Delete</Button>

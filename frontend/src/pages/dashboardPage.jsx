@@ -16,6 +16,7 @@ import LinkCard from "../components/linkCard";
 import QrCard from "../components/qrCard";
 import SearchBar from "../components/searchBar";
 import Skeleton from "../components/Skeleton";
+import logo from "../assets/logo.png";
 
 function DashboardPage() {
   const { user, logout } = useContext(AuthContext);
@@ -91,22 +92,25 @@ function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Top bar */}
-      <div className="bg-card border-b border-border px-6 py-4 flex justify-between items-center">
-        <h1 className="text-xl font-bold text-foreground">LinkIn Dashboard</h1>
-        <div className="flex items-center gap-2">
-          <ThemeDropdown />
-          <Button variant="outline" size="sm" onClick={() => setProfileOpen(true)}>
-            Edit Profile
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => navigate("/customize-profile")}>
-            Customize Profile
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => setLogoutConfirm(true)} className="text-destructive hover:text-destructive">
-            Logout
-          </Button>
-        </div>
-      </div>
+      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
+        <nav className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+          <a href="/dashboard" className="flex items-center">
+            <img src={logo} alt="LinkIn" className="h-10 w-auto object-contain" />
+          </a>
+          <div className="flex items-center gap-3">
+            <ThemeDropdown />
+            <Button variant="outline" size="sm" onClick={() => setProfileOpen(true)}>
+              Edit Profile
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => navigate("/customize-profile")}>
+              Customize Profile
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setLogoutConfirm(true)} className="text-destructive hover:text-destructive">
+              Logout
+            </Button>
+          </div>
+        </nav>
+      </header>
 
       <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

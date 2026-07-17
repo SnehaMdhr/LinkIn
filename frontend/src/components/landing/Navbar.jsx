@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "../ui/button";
 import ThemeDropdown from "../ThemeDropdown";
+import logo from "../../assets/logo.png";
 
 const navLinks = [
   { label: "Home", href: "#home" },
@@ -28,11 +29,8 @@ function Navbar({ onLoginOpen, onRegisterOpen }) {
       }`}
     >
       <nav className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-sm">L</span>
-          </div>
-          <span className="text-lg font-bold text-foreground tracking-tight">LinkIn</span>
+        <Link to="/" className="flex items-center">
+          <img src={logo} alt="LinkIn" className="h-10 w-auto object-contain" />
         </Link>
 
         <div className="hidden md:flex items-center gap-6">

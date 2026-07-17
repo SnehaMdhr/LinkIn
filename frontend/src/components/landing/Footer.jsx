@@ -1,3 +1,5 @@
+import logo from "../../assets/logo.png";
+
 function GithubIcon({ className }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="currentColor">
@@ -11,11 +13,8 @@ function Footer() {
   return (
     <footer className="border-t border-border bg-muted/20">
       <div className="max-w-7xl mx-auto px-4 py-6 flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-xs">L</span>
-          </div>
-          <span className="text-sm font-semibold text-foreground">LinkIn</span>
+        <div className="flex items-center">
+          <img src={logo} alt="LinkIn" className="h-8 w-auto object-contain" />
         </div>
 
         <div className="flex items-center space-x-4">

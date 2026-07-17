@@ -21,8 +21,6 @@ function ProfileCard({ user }) {
         )}
 
         <div className="mt-4 flex gap-2 text-xs text-muted-foreground">
-          <span>Theme: {user.theme}</span>
-          <span>•</span>
           <span>Status: {user.status}</span>
         </div>
       </CardContent>

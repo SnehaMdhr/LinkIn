@@ -8,6 +8,7 @@ function QrCard({ username }) {
   const toast = useToast();
   const [copied, setCopied] = useState(false);
   const profileUrl = `${window.location.origin}/${username}`;
+  const qrUrl = `${profileUrl}?qr=1`;
 
   const handleDownload = () => {
     const canvas = document.getElementById("qr-canvas");
@@ -52,7 +53,7 @@ function QrCard({ username }) {
     <Card>
       <CardContent className="p-6 flex flex-col items-center">
         <h3 className="text-sm font-bold text-foreground mb-3">Your QR Code</h3>
-        <QRCodeCanvas id="qr-canvas" value={profileUrl} size={140} />
+        <QRCodeCanvas id="qr-canvas" value={qrUrl} size={140} />
         <p className="text-xs text-muted-foreground mt-3 break-all text-center">{profileUrl}</p>
         <div className="flex gap-2 mt-3 w-full">
           <Button onClick={handleCopyLink} className="flex-1" size="sm" variant={copied ? "default" : "outline"}>

@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { QRCodeCanvas } from "qrcode.react";
 import api from "../services/api";
 import PlatformIcon from "../components/PlatformIcon";
-import { trackProfileView } from "../services/analyticsServices";
+import { trackProfileView, trackLinkClick, trackQrScan } from "../services/analyticsServices";
 import { DEFAULT_CUSTOMIZATION, getGradientCSS, getBlurValue } from "../config/customization";
 import { loadFont, getFontFamily } from "../utils/fonts";
 
@@ -50,6 +50,7 @@ function getButtonClasses(style, width, animation, btnTextColor) {
 
 function PublicProfilePage() {
   const { username } = useParams();
+  const [searchParams] = useSearchParams();
   const [profile, setProfile] = useState(null);
   const [notFound, setNotFound] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -63,6 +64,9 @@ function PublicProfilePage() {
         setProfile(response.data);
         if (response.data?.user?._id) {
           trackProfileView(response.data.user._id).catch(() => {});
+          if (searchParams.get("qr") === "1") {
+            trackQrScan(response.data.user._id).catch(() => {});
+          }
         }
       } catch (err) {
         if (err.response?.status === 404) {
@@ -73,7 +77,7 @@ function PublicProfilePage() {
       }
     };
     fetchProfile();
-  }, [username]);
+  }, [username, searchParams]);
 
   if (loading) {
     return (
@@ -237,6 +241,11 @@ function PublicProfilePage() {
                 href={link.url}
                 target="_blank"
                 rel="noreferrer"
+                onClick={() => {
+                  if (user?._id) {
+                    trackLinkClick(user._id, link._id).catch(() => {});
+                  }
+                }}
                 className={`block font-medium transition-all duration-200 py-4 px-5 ${getButtonClasses(
                   c.buttonStyle,
                   c.buttonWidth,
@@ -293,7 +302,7 @@ function PublicProfilePage() {
           >
             <div className="backdrop-blur-sm border border-white/20 rounded-xl p-4 inline-flex flex-col items-center" style={{ background: `rgba(255,255,255,${c.cardOpacity / 100})` }}>
               <p className="text-[10px] mb-2 uppercase tracking-wider" style={{ color: tcs }}>Scan to share</p>
-              <QRCodeCanvas value={`${window.location.origin}/${username}`} size={80} />
+              <QRCodeCanvas value={`${window.location.origin}/${username}?qr=1`} size={80} />
             </div>
           </div>
         )}

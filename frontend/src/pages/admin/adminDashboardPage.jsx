@@ -11,6 +11,7 @@ import UserTable from "../../components/userTable";
 import CreateUserModal from "../../components/CreateUserModal";
 import UserDetailModal from "../../components/UserDetailModal";
 import ConfirmDialog from "../../components/ConfirmDialog";
+import logo from "../../assets/logo.png";
 
 function AdminDashboardPage() {
   const { user, logout } = useContext(AuthContext);
@@ -79,23 +80,27 @@ function AdminDashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="bg-card border-b border-border px-6 py-4 flex justify-between items-center">
-        <h1 className="text-xl font-bold text-foreground">LinkIn Dashboard</h1>
-        <div className="flex items-center gap-2">
-          <ThemeDropdown />
-          <Button variant="outline" size="sm" onClick={() => setProfileOpen(true)}>
-            Edit Profile
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setLogoutConfirm(true)}
-            className="text-destructive hover:text-destructive"
-          >
-            Logout
-          </Button>
-        </div>
-      </div>
+      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
+        <nav className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+          <a href="/dashboard" className="flex items-center">
+            <img src={logo} alt="LinkIn" className="h-10 w-auto object-contain" />
+          </a>
+          <div className="flex items-center gap-3">
+            <ThemeDropdown />
+            <Button variant="outline" size="sm" onClick={() => setProfileOpen(true)}>
+              Edit Profile
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setLogoutConfirm(true)}
+              className="text-destructive hover:text-destructive"
+            >
+              Logout
+            </Button>
+          </div>
+        </nav>
+      </header>
 
       <div className="max-w-3xl mx-auto px-4 py-8 space-y-4">
         <div className="flex items-center justify-between gap-4">
