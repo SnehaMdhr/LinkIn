@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import morgan from "morgan";
@@ -16,8 +17,8 @@ dotenv.config();
 connectDB();
 
 const app = express();
-app.use(morgan()); // Log HTTP requests to the console
-// Basic middleware (functionality only, no security hardening yet)
+app.use(morgan());
+app.use(helmet());
 app.use(cors());
 app.use(express.json({ limit: "5mb" }));
 
