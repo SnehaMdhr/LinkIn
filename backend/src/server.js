@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import mongoSanitize from "express-mongo-sanitize";
+import path from "path";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import morgan from "morgan";
@@ -26,6 +27,8 @@ app.use(cors({
 }));
 app.use(express.json({ limit: "5mb" }));
 app.use(mongoSanitize());
+
+app.use("/uploads", express.static(path.join(process.cwd(), "src/uploads")));
 
 // Test route to confirm server is alive
 app.get("/", (req, res) => {

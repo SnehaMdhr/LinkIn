@@ -26,6 +26,17 @@ const errorHandler = (err, req, res, next) => {
     return res.status(401).json({ message: "Token expired." });
   }
 
+  // Multer file upload errors
+  if (err.code === "LIMIT_FILE_SIZE") {
+    return res.status(400).json({ message: "File too large. Max size is 2MB." });
+  }
+  if (err.code === "LIMIT_UNEXPECTED_FILE") {
+    return res.status(400).json({ message: "Unexpected file field." });
+  }
+  if (err.message && err.message.includes("Only JPEG")) {
+    return res.status(400).json({ message: err.message });
+  }
+
   // Default: unexpected server error
   res.status(err.statusCode || 500).json({
     message: err.message || "Internal server error",

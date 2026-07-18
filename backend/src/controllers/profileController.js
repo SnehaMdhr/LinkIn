@@ -136,13 +136,18 @@ export const resetCustomization = async (req, res, next) => {
 export const updateProfile = async (req, res, next) => {
   try {
     const userId = req.user.userId;
-    const { name, bio, profileImage, theme } = req.body;
+    const { name, bio, theme } = req.body;
 
     const updateData = {};
     if (name !== undefined) updateData.name = name;
     if (bio !== undefined) updateData.bio = xss(bio);
-    if (profileImage !== undefined) updateData.profileImage = profileImage;
     if (theme !== undefined) updateData.theme = theme;
+
+    if (req.file) {
+      updateData.profileImage = `/uploads/${req.file.filename}`;
+    } else if (req.body.profileImage !== undefined) {
+      updateData.profileImage = req.body.profileImage;
+    }
 
     const updatedUser = await User.findByIdAndUpdate(
       userId,
