@@ -1,3 +1,4 @@
+import xss from "xss";
 import User from "../models/user.js";
 
 // @desc  Get logged-in user's profile
@@ -139,7 +140,7 @@ export const updateProfile = async (req, res, next) => {
 
     const updateData = {};
     if (name !== undefined) updateData.name = name;
-    if (bio !== undefined) updateData.bio = bio;
+    if (bio !== undefined) updateData.bio = xss(bio);
     if (profileImage !== undefined) updateData.profileImage = profileImage;
     if (theme !== undefined) updateData.theme = theme;
 

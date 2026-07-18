@@ -1,3 +1,4 @@
+import xss from "xss";
 import Link from "../models/link.js";
 
 // @desc  Get all links for the logged-in user
@@ -24,7 +25,7 @@ export const createLink = async (req, res, next) => {
       return res.status(400).json({ message: "platform, title, and url are required" });
     }
 
-    const link = await Link.create({ userId, platform, title, url, position, isHidden, isPinned, category });
+    const link = await Link.create({ userId, platform, title: xss(title), url, position, isHidden, isPinned, category });
     res.status(201).json({ message: "Link created", link });
   } catch (error) {
     next(error);
@@ -40,7 +41,7 @@ export const updateLink = async (req, res, next) => {
 
     const updatedLink = await Link.findByIdAndUpdate(
       id,
-      { platform, title, url, position, isHidden, isPinned, category },
+      { platform, title: xss(title), url, position, isHidden, isPinned, category },
       { new: true, runValidators: true }
     );
 
