@@ -30,10 +30,8 @@ function LoginDialog({ open, onOpenChange, onSwitchToRegister, onSwitchToForgotP
     e.preventDefault();
     setError("");
 
-    if (!formData.email.trim() || !formData.password.trim()) {
-      setError("Please fill in all fields.");
-      return;
-    }
+    if (!formData.email.trim()) { setError("Email is required."); return; }
+    if (!formData.password) { setError("Password is required."); return; }
 
     setLoading(true);
     try {

@@ -20,6 +20,10 @@ function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    if (!formData.email.trim()) { setError("Email is required."); return; }
+    if (!formData.password) { setError("Password is required."); return; }
+
     setLoading(true);
     try {
       const data = await loginUser(formData);

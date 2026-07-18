@@ -59,6 +59,9 @@ export default function AddLinkModal({ open, onOpenChange, onLinkAdded }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    if (!formData.url.trim()) { setError("URL is required."); return; }
+
     setLoading(true);
 
     try {

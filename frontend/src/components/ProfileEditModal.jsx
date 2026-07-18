@@ -50,6 +50,9 @@ export default function ProfileEditModal({ open, onOpenChange }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    if (!formData.name.trim()) { setError("Name is required."); return; }
+
     setLoading(true);
 
     try {

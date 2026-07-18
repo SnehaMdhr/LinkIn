@@ -17,6 +17,16 @@ function RegisterPage() {
   const s = async (e) => {
     e.preventDefault();
     setError("");
+
+    if (!f.name.trim()) { setError("Name is required."); return; }
+    if (!f.email.trim()) { setError("Email is required."); return; }
+    if (!f.username.trim()) { setError("Username is required."); return; }
+    if (f.password.length < 6) { setError("Password must be at least 6 characters."); return; }
+    if (!/[A-Z]/.test(f.password)) { setError("Password must contain at least one uppercase letter."); return; }
+    if (!/[a-z]/.test(f.password)) { setError("Password must contain at least one lowercase letter."); return; }
+    if (!/[0-9]/.test(f.password)) { setError("Password must contain at least one number."); return; }
+    if (!/[^A-Za-z0-9]/.test(f.password)) { setError("Password must contain at least one special character."); return; }
+
     setLoading(true);
     try {
       await registerUser(f);
@@ -67,6 +77,7 @@ function RegisterPage() {
               <input type="password" name="password" value={f.password} onChange={h}
                 className="w-full border border-input rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring"
                 placeholder="••••••••" />
+              <p className="text-xs text-muted-foreground mt-1">Min 6 chars, 1 uppercase, 1 lowercase, 1 number, 1 special character.</p>
             </div>
             <Button type="submit" disabled={loading} className="w-full" size="lg">
               {loading ? "Registering..." : "Register"}

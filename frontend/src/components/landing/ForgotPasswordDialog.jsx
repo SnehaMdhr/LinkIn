@@ -25,6 +25,9 @@ export default function ForgotPasswordDialog({ open, onOpenChange, onSwitchToLog
     setError("");
     setMessage("");
     setResetUrl("");
+
+    if (!email.trim()) { setError("Email is required."); return; }
+
     setLoading(true);
     try {
       const data = await forgotPassword(email);

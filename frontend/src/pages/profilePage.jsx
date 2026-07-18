@@ -37,6 +37,9 @@ function ProfilePage() {
     e.preventDefault();
     setError("");
     setSuccess("");
+
+    if (!formData.name.trim()) { setError("Name is required."); return; }
+
     setLoading(true);
 
     try {

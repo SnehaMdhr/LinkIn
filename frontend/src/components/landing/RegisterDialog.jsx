@@ -38,6 +38,12 @@ function RegisterDialog({ open, onOpenChange, onSwitchToLogin }) {
       return;
     }
 
+    if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
+    if (!/[A-Z]/.test(password)) { setError("Password must contain at least one uppercase letter."); return; }
+    if (!/[a-z]/.test(password)) { setError("Password must contain at least one lowercase letter."); return; }
+    if (!/[0-9]/.test(password)) { setError("Password must contain at least one number."); return; }
+    if (!/[^A-Za-z0-9]/.test(password)) { setError("Password must contain at least one special character."); return; }
+
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match.");
       return;
@@ -130,6 +136,7 @@ function RegisterDialog({ open, onOpenChange, onSwitchToLogin }) {
               onChange={handleChange}
               placeholder="Enter your Password"
             />
+            <p className="text-xs text-muted-foreground">Min 6 chars, 1 uppercase, 1 lowercase, 1 number, 1 special character.</p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="reg-confirm-password">Confirm Password</Label>
