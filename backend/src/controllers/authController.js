@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 import User from "../models/user.js";
 
 const SALT_ROUNDS = 10;
@@ -73,9 +74,15 @@ export const loginUser = async (req, res) => {
       return res.status(403).json({ message: "This account has been suspended" });
     }
 
-    // NOTE: no JWT yet — returning basic user info directly (Day 1, no auth tokens)
+    const token = jwt.sign(
+      { userId: user._id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "15d" }
+    );
+
     res.status(200).json({
       message: "Login successful",
+      token,
       user: {
         id: user._id,
         name: user.name,
