@@ -19,7 +19,10 @@ connectDB();
 const app = express();
 app.use(morgan());
 app.use(helmet());
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL,
+  credentials: true,
+}));
 app.use(express.json({ limit: "5mb" }));
 
 // Test route to confirm server is alive
