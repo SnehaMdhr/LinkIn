@@ -1,5 +1,8 @@
+import bcrypt from "bcrypt";
 import User from "../models/user.js";
 import Link from "../models/link.js";
+
+const SALT_ROUNDS = 10;
 
 // @desc  Create a new user
 // @route POST /api/admin/users
@@ -17,11 +20,13 @@ export const createUser = async (req, res) => {
       return res.status(400).json({ message: `A user with that ${field} already exists` });
     }
 
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+
     const newUser = await User.create({
       name,
       email,
       username,
-      password,
+      password: hashedPassword,
       role: role || "user",
       status: status || "active",
       profileImage: profileImage || "",

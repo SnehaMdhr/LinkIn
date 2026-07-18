@@ -1,5 +1,8 @@
 import crypto from "crypto";
+import bcrypt from "bcrypt";
 import User from "../models/user.js";
+
+const SALT_ROUNDS = 10;
 
 // @desc  Register a new user
 // @route POST /api/auth/register
@@ -20,8 +23,10 @@ export const registerUser = async (req, res) => {
       return res.status(400).json({ message: "User with this email or username already exists" });
     }
 
-    // NOTE: password stored as plain text for now (Day 1, no security)
-    const user = await User.create({ name: trimmedName, email: trimmedEmail, password, username });
+    // Hash the password before saving — never store plain text
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+
+    const user = await User.create({ name: trimmedName, email: trimmedEmail, password: hashedPassword, username });
 
     res.status(201).json({
       message: "User registered successfully",
@@ -58,9 +63,9 @@ export const loginUser = async (req, res) => {
       return res.status(400).json({ message: "Invalid email or password" });
     }
 
-    // NOTE: plain text comparison for now (Day 1, no security)
-    // bcrypt.compare() will replace this in Phase 2
-    if (user.password !== password) {
+    // Compare submitted password against the stored hash
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
       return res.status(400).json({ message: "Invalid email or password" });
     }
 
@@ -140,7 +145,7 @@ export const resetPassword = async (req, res) => {
       return res.status(400).json({ message: "Invalid or expired reset token" });
     }
 
-    user.password = password;
+    user.password = await bcrypt.hash(password, SALT_ROUNDS);
     user.resetPasswordToken = null;
     user.resetPasswordExpire = null;
     await user.save();
