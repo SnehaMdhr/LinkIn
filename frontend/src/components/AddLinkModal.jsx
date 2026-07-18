@@ -62,7 +62,7 @@ export default function AddLinkModal({ open, onOpenChange, onLinkAdded }) {
     setLoading(true);
 
     try {
-      await createLink({ ...formData, userId: user.id });
+      await createLink(formData);
       toast.success("Link added successfully!");
       onOpenChange(false);
       if (onLinkAdded) onLinkAdded();

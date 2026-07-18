@@ -23,7 +23,7 @@ function LoginPage() {
     setLoading(true);
     try {
       const data = await loginUser(formData);
-      login(data.user);
+      login(data.user, data.token);
       toast.success(`Welcome back, ${data.user.name}!`);
       navigate(data.user.role === "admin" ? "/admin" : "/dashboard");
     } catch (err) {

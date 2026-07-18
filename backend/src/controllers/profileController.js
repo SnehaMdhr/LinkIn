@@ -1,19 +1,10 @@
-import mongoose from "mongoose";
 import User from "../models/user.js";
 
 // @desc  Get logged-in user's profile
-// @route GET /api/profile?userId=xxxx
-// NOTE: userId comes from query param for now — no auth middleware yet (Day 1)
+// @route GET /api/profile
 export const getProfile = async (req, res) => {
   try {
-    const { userId } = req.query;
-
-    if (!userId) {
-      return res.status(400).json({ message: "userId is required" });
-    }
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({ message: "Invalid userId format" });
-    }
+    const userId = req.user.userId;
 
     const user = await User.findById(userId).select("-password");
     if (!user) {
@@ -53,13 +44,8 @@ export const getCustomization = async (req, res) => {
 // @route PUT /api/profile/customization
 export const updateCustomization = async (req, res) => {
   try {
-    const { userId, customization } = req.body;
-    if (!userId) {
-      return res.status(400).json({ message: "userId is required" });
-    }
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({ message: "Invalid userId format" });
-    }
+    const userId = req.user.userId;
+    const { customization } = req.body;
     if (!customization || typeof customization !== "object") {
       return res.status(400).json({ message: "customization object is required" });
     }
@@ -101,13 +87,7 @@ export const updateCustomization = async (req, res) => {
 // @route PUT /api/profile/customization/reset
 export const resetCustomization = async (req, res) => {
   try {
-    const { userId } = req.body;
-    if (!userId) {
-      return res.status(400).json({ message: "userId is required" });
-    }
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({ message: "Invalid userId format" });
-    }
+    const userId = req.user.userId;
 
     const defaults = {
       backgroundType: "gradient",
@@ -158,20 +138,10 @@ export const resetCustomization = async (req, res) => {
 
 // @desc  Update logged-in user's profile
 // @route PUT /api/profile
-// NOTE: userId comes from request body for now — no auth middleware yet (Day 1)
 export const updateProfile = async (req, res) => {
   try {
-    const { userId, name, bio, profileImage, theme } = req.body;
-
-    if (!userId) {
-      return res.status(400).json({ message: "userId is required" });
-    }
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({
-        message: "Invalid userId format — your session may be corrupted. Try logging out and back in.",
-        receivedUserId: userId,
-      });
-    }
+    const userId = req.user.userId;
+    const { name, bio, profileImage, theme } = req.body;
 
     // Only update fields that are actually provided (supports both full
     // profile saves from the profile page and partial updates like theme-only)

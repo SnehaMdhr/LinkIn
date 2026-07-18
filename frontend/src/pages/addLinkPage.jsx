@@ -43,7 +43,7 @@ function AddLinkPage() {
     setLoading(true);
 
     try {
-      await createLink({ ...formData, userId: user.id });
+      await createLink(formData);
       toast.success("Link added successfully!");
       navigate("/dashboard");
     } catch (err) {

@@ -1,14 +1,10 @@
 import Link from "../models/link.js";
 
-// @desc  Get all links for a user
-// @route GET /api/links?userId=xxxx
+// @desc  Get all links for the logged-in user
+// @route GET /api/links
 export const getLinks = async (req, res) => {
   try {
-    const { userId } = req.query;
-
-    if (!userId) {
-      return res.status(400).json({ message: "userId is required" });
-    }
+    const userId = req.user.userId;
 
     const links = await Link.find({ userId }).sort({ isPinned: -1, position: 1 });
     res.status(200).json(links);
@@ -21,10 +17,11 @@ export const getLinks = async (req, res) => {
 // @route POST /api/links
 export const createLink = async (req, res) => {
   try {
-    const { userId, platform, title, url, position, isHidden, isPinned, category } = req.body;
+    const userId = req.user.userId;
+    const { platform, title, url, position, isHidden, isPinned, category } = req.body;
 
-    if (!userId || !platform || !title || !url) {
-      return res.status(400).json({ message: "userId, platform, title, and url are required" });
+    if (!platform || !title || !url) {
+      return res.status(400).json({ message: "platform, title, and url are required" });
     }
 
     const link = await Link.create({ userId, platform, title, url, position, isHidden, isPinned, category });

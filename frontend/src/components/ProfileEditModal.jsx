@@ -53,7 +53,7 @@ export default function ProfileEditModal({ open, onOpenChange }) {
     setLoading(true);
 
     try {
-      const response = await api.put("/profile", { userId: user.id, ...formData });
+      const response = await api.put("/profile", formData);
       login({ ...user, ...response.data.user });
       toast.success("Profile updated successfully!");
       onOpenChange(false);

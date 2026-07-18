@@ -21,7 +21,7 @@ export default function ThemeDropdown() {
       /* Logged-in: update context + persist to backend */
       login({ ...user, theme: newTheme });
       try {
-        await api.put("/profile", { userId: user.id, theme: newTheme });
+        await api.put("/profile", { theme: newTheme });
         toast.success(`Switched to ${newTheme} mode`);
       } catch {
         toast.error("Failed to save theme preference.");
