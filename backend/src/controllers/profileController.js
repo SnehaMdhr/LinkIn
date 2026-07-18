@@ -2,7 +2,7 @@ import User from "../models/user.js";
 
 // @desc  Get logged-in user's profile
 // @route GET /api/profile
-export const getProfile = async (req, res) => {
+export const getProfile = async (req, res, next) => {
   try {
     const userId = req.user.userId;
 
@@ -13,36 +13,32 @@ export const getProfile = async (req, res) => {
 
     res.status(200).json(user);
   } catch (error) {
-    console.error("Get profile error:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
+    next(error);
   }
 };
 
 // @desc  Get user's profile customization
 // @route GET /api/profile/customization?userId=xxxx
-export const getCustomization = async (req, res) => {
+export const getCustomization = async (req, res, next) => {
   try {
     const { userId } = req.query;
     if (!userId) {
       return res.status(400).json({ message: "userId is required" });
     }
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({ message: "Invalid userId format" });
-    }
+
     const user = await User.findById(userId).select("profileCustomization");
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
     res.status(200).json(user.profileCustomization || {});
   } catch (error) {
-    console.error("Get customization error:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
+    next(error);
   }
 };
 
 // @desc  Update user's profile customization
 // @route PUT /api/profile/customization
-export const updateCustomization = async (req, res) => {
+export const updateCustomization = async (req, res, next) => {
   try {
     const userId = req.user.userId;
     const { customization } = req.body;
@@ -78,14 +74,13 @@ export const updateCustomization = async (req, res) => {
 
     res.status(200).json({ message: "Customization updated", user: updatedUser });
   } catch (error) {
-    console.error("Update customization error:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
+    next(error);
   }
 };
 
 // @desc  Reset user's profile customization to defaults
 // @route PUT /api/profile/customization/reset
-export const resetCustomization = async (req, res) => {
+export const resetCustomization = async (req, res, next) => {
   try {
     const userId = req.user.userId;
 
@@ -131,20 +126,17 @@ export const resetCustomization = async (req, res) => {
 
     res.status(200).json({ message: "Customization reset to defaults", user: updatedUser });
   } catch (error) {
-    console.error("Reset customization error:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
+    next(error);
   }
 };
 
 // @desc  Update logged-in user's profile
 // @route PUT /api/profile
-export const updateProfile = async (req, res) => {
+export const updateProfile = async (req, res, next) => {
   try {
     const userId = req.user.userId;
     const { name, bio, profileImage, theme } = req.body;
 
-    // Only update fields that are actually provided (supports both full
-    // profile saves from the profile page and partial updates like theme-only)
     const updateData = {};
     if (name !== undefined) updateData.name = name;
     if (bio !== undefined) updateData.bio = bio;
@@ -163,11 +155,6 @@ export const updateProfile = async (req, res) => {
 
     res.status(200).json({ message: "Profile updated", user: updatedUser });
   } catch (error) {
-    if (error.name === "ValidationError") {
-      console.error("Profile update validation error:", error.errors);
-    } else {
-      console.error("Profile update error:", error);
-    }
-    res.status(500).json({ message: "Server error", error: error.message });
+    next(error);
   }
 };

@@ -2,20 +2,20 @@ import Link from "../models/link.js";
 
 // @desc  Get all links for the logged-in user
 // @route GET /api/links
-export const getLinks = async (req, res) => {
+export const getLinks = async (req, res, next) => {
   try {
     const userId = req.user.userId;
 
     const links = await Link.find({ userId }).sort({ isPinned: -1, position: 1 });
     res.status(200).json(links);
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    next(error);
   }
 };
 
 // @desc  Create a new link
 // @route POST /api/links
-export const createLink = async (req, res) => {
+export const createLink = async (req, res, next) => {
   try {
     const userId = req.user.userId;
     const { platform, title, url, position, isHidden, isPinned, category } = req.body;
@@ -27,13 +27,13 @@ export const createLink = async (req, res) => {
     const link = await Link.create({ userId, platform, title, url, position, isHidden, isPinned, category });
     res.status(201).json({ message: "Link created", link });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    next(error);
   }
 };
 
 // @desc  Update an existing link
 // @route PUT /api/links/:id
-export const updateLink = async (req, res) => {
+export const updateLink = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { platform, title, url, position, isHidden, isPinned, category } = req.body;
@@ -50,13 +50,13 @@ export const updateLink = async (req, res) => {
 
     res.status(200).json({ message: "Link updated", link: updatedLink });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    next(error);
   }
 };
 
 // @desc  Delete a link
 // @route DELETE /api/links/:id
-export const deleteLink = async (req, res) => {
+export const deleteLink = async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -67,15 +67,15 @@ export const deleteLink = async (req, res) => {
 
     res.status(200).json({ message: "Link deleted" });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    next(error);
   }
 };
 
 // @desc  Reorder links (bulk update positions)
 // @route PUT /api/links/reorder
-export const reorderLinks = async (req, res) => {
+export const reorderLinks = async (req, res, next) => {
   try {
-    const { items } = req.body; // [{ _id, position }, ...]
+    const { items } = req.body;
 
     if (!items || !Array.isArray(items)) {
       return res.status(400).json({ message: "items array is required" });
@@ -88,13 +88,13 @@ export const reorderLinks = async (req, res) => {
     await Link.bulkWrite(updates);
     res.status(200).json({ message: "Links reordered" });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    next(error);
   }
 };
 
 // @desc  Get a single link by its ID
 // @route GET /api/links/single/:id
-export const getLinkById = async (req, res) => {
+export const getLinkById = async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -105,6 +105,6 @@ export const getLinkById = async (req, res) => {
 
     res.status(200).json(link);
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    next(error);
   }
 };

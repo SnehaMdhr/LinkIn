@@ -6,11 +6,12 @@ import {
   updateUser,
   deleteUser,
 } from "../controllers/adminController.js";
+import { verifyToken, isAdmin } from "../middleware/verifyToken.js";
 
 const router = express.Router();
 
-// NOTE: No admin-auth middleware yet — anyone can call these routes directly
-// via Postman today. Real RBAC middleware comes in Phase 2 (Day 2+).
+router.use(verifyToken, isAdmin);
+
 router.get("/users", getAllUsers);
 router.get("/users/:id", getUserDetails);
 router.post("/users", createUser);

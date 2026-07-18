@@ -4,7 +4,7 @@ import Link from "../models/link.js";
 
 // @desc  Track a profile view
 // @route POST /api/analytics/profile-view
-export const trackProfileView = async (req, res) => {
+export const trackProfileView = async (req, res, next) => {
   try {
     const { userId } = req.body;
     if (!userId) return res.status(400).json({ message: "userId is required" });
@@ -12,13 +12,13 @@ export const trackProfileView = async (req, res) => {
     await Analytics.create({ userId, type: "profile_view" });
     res.status(200).json({ message: "Tracked" });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    next(error);
   }
 };
 
 // @desc  Track a link click
 // @route POST /api/analytics/link-click
-export const trackLinkClick = async (req, res) => {
+export const trackLinkClick = async (req, res, next) => {
   try {
     const { userId, linkId } = req.body;
     if (!userId || !linkId) return res.status(400).json({ message: "userId and linkId are required" });
@@ -26,13 +26,13 @@ export const trackLinkClick = async (req, res) => {
     await Analytics.create({ userId, linkId, type: "link_click" });
     res.status(200).json({ message: "Tracked" });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    next(error);
   }
 };
 
 // @desc  Track a QR scan
 // @route POST /api/analytics/qr-scan
-export const trackQrScan = async (req, res) => {
+export const trackQrScan = async (req, res, next) => {
   try {
     const { userId } = req.body;
     if (!userId) return res.status(400).json({ message: "userId is required" });
@@ -40,13 +40,13 @@ export const trackQrScan = async (req, res) => {
     await Analytics.create({ userId, type: "qr_scan" });
     res.status(200).json({ message: "Tracked" });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    next(error);
   }
 };
 
 // @desc  Get dashboard stats for a user
 // @route GET /api/analytics/stats?userId=xxx
-export const getUserStats = async (req, res) => {
+export const getUserStats = async (req, res, next) => {
   try {
     const { userId } = req.query;
     if (!userId) return res.status(400).json({ message: "userId is required" });
@@ -58,7 +58,6 @@ export const getUserStats = async (req, res) => {
       Link.countDocuments({ userId }),
     ]);
 
-    // Most clicked link
     const mostClicked = await Analytics.aggregate([
       { $match: { userId: new mongoose.Types.ObjectId(userId), type: "link_click" } },
       { $group: { _id: "$linkId", count: { $sum: 1 } } },
@@ -71,10 +70,8 @@ export const getUserStats = async (req, res) => {
       mostClickedLink = await Link.findById(mostClicked[0]._id).select("title url");
     }
 
-    // Recent links (last 5)
     const recentLinks = await Link.find({ userId }).sort({ createdAt: -1 }).limit(5).select("title platform url createdAt");
 
-    // Daily views (last 7 days)
     const lastWeek = new Date();
     lastWeek.setDate(lastWeek.getDate() - 7);
     const dailyViews = await Analytics.aggregate([
@@ -83,7 +80,6 @@ export const getUserStats = async (req, res) => {
       { $sort: { _id: 1 } },
     ]);
 
-    // Weekly views
     const lastMonth = new Date();
     lastMonth.setDate(lastMonth.getDate() - 30);
     const weeklyViews = await Analytics.aggregate([
@@ -92,7 +88,6 @@ export const getUserStats = async (req, res) => {
       { $sort: { _id: 1 } },
     ]);
 
-    // Monthly views
     const lastYear = new Date();
     lastYear.setFullYear(lastYear.getFullYear() - 1);
     const monthlyViews = await Analytics.aggregate([
@@ -113,6 +108,6 @@ export const getUserStats = async (req, res) => {
       monthlyViews,
     });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    next(error);
   }
 };

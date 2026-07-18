@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import morgan from "morgan";
+import errorHandler from "./middleware/errorHandler.js";
 import authRoutes from "./routes/authRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
 import linkRoutes from "./routes/linkRoutes.js";
@@ -32,6 +33,8 @@ app.use("/api/links", linkRoutes);
 app.use("/api/user", publicRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/analytics", analyticsRoutes);
+
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
