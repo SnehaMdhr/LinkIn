@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
-import mongoSanitize from "express-mongo-sanitize";
+import mongoSanitize from "./middleware/sanitize.js";
 import path from "path";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
@@ -22,11 +22,19 @@ const app = express();
 app.use(morgan());
 app.use(helmet());
 app.use(cors({
-  origin: process.env.FRONTEND_URL,
+  origin: (origin, callback) => {
+    const allowedOrigins = process.env.FRONTEND_URL.split(",").map(o => o.trim());
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true,
 }));
 app.use(express.json({ limit: "5mb" }));
 app.use(mongoSanitize());
+
 
 app.use("/uploads", express.static(path.join(process.cwd(), "src/uploads")));
 

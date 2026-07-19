@@ -19,13 +19,10 @@ export const getProfile = async (req, res, next) => {
 };
 
 // @desc  Get user's profile customization
-// @route GET /api/profile/customization?userId=xxxx
+// @route GET /api/profile/customization
 export const getCustomization = async (req, res, next) => {
   try {
-    const { userId } = req.query;
-    if (!userId) {
-      return res.status(400).json({ message: "userId is required" });
-    }
+    const userId = req.user.userId;
 
     const user = await User.findById(userId).select("profileCustomization");
     if (!user) {

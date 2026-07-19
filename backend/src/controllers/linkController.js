@@ -37,11 +37,23 @@ export const createLink = async (req, res, next) => {
 export const updateLink = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { platform, title, url, position, isHidden, isPinned, category } = req.body;
+    const allowed = ["platform", "title", "url", "position", "isHidden", "isPinned", "category"];
+
+    // Only include fields that were actually sent in the request body
+    const updateFields = {};
+    for (const field of allowed) {
+      if (req.body[field] !== undefined) {
+        updateFields[field] = field === "title" ? xss(req.body[field]) : req.body[field];
+      }
+    }
+
+    if (Object.keys(updateFields).length === 0) {
+      return res.status(400).json({ message: "No valid fields provided to update" });
+    }
 
     const updatedLink = await Link.findByIdAndUpdate(
       id,
-      { platform, title: xss(title), url, position, isHidden, isPinned, category },
+      updateFields,
       { new: true, runValidators: true }
     );
 

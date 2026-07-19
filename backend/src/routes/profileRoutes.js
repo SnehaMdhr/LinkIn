@@ -7,7 +7,7 @@ const router = express.Router();
 
 router.get("/", verifyToken, getProfile);
 router.put("/", verifyToken, upload.single("profileImage"), updateProfile);
-router.get("/customization", getCustomization);
+router.get("/customization", verifyToken, getCustomization);
 router.put("/customization", verifyToken, updateCustomization);
 router.put("/customization/reset", verifyToken, resetCustomization);
 

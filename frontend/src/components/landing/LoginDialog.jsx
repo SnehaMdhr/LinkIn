@@ -36,7 +36,7 @@ function LoginDialog({ open, onOpenChange, onSwitchToRegister, onSwitchToForgotP
     setLoading(true);
     try {
       const data = await loginUser(formData);
-      login(data.user, rememberMe);
+      login(data.user, data.token, rememberMe);
       toast.success(`Welcome back, ${data.user.name}!`);
       onOpenChange(false);
       navigate(data.user.role === "admin" ? "/admin" : "/dashboard");

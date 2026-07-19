@@ -25,7 +25,9 @@ export function AuthProvider({ children }) {
   }, [user]);
 
   const login = (userData, token, rememberMe = true) => {
-    const userWithToken = { ...userData, token };
+    // Preserve existing token if a new one isn't provided
+    const resolvedToken = token !== undefined ? token : userData?.token;
+    const userWithToken = { ...userData, token: resolvedToken };
     setUser(userWithToken);
     if (rememberMe) {
       localStorage.setItem("linkin_user", JSON.stringify(userWithToken));
