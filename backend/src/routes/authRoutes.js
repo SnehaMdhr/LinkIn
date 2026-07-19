@@ -10,12 +10,16 @@ const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   handler: (req, res, next, options) => {
-    const retryAfter = Math.ceil(options.windowMs / 1000);
-    const minutes = Math.floor(retryAfter / 60);
-    const seconds = retryAfter % 60;
+    const resetTime = req.rateLimit?.resetTime;
+    const msRemaining = resetTime ? resetTime - Date.now() : options.windowMs;
+    const totalSeconds = Math.ceil(Math.max(0, msRemaining) / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
     const time = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+
     res.status(429).json({
       message: `Too many attempts. Please try again in ${time}.`,
+      resetTime: resetTime?.toISOString?.() || null,
     });
   },
 });

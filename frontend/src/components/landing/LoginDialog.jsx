@@ -13,11 +13,13 @@ import {
   DialogTitle,
   DialogDescription,
 } from "../ui/dialog";
+import RateLimitCountdown from "../RateLimitCountdown";
 
 function LoginDialog({ open, onOpenChange, onSwitchToRegister, onSwitchToForgotPassword }) {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState("");
+  const [rateLimitReset, setRateLimitReset] = useState(null);
   const [loading, setLoading] = useState(false);
   const { login } = useContext(AuthContext);
   const toast = useToast();
@@ -29,6 +31,7 @@ function LoginDialog({ open, onOpenChange, onSwitchToRegister, onSwitchToForgotP
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setRateLimitReset(null);
 
     if (!formData.email.trim()) { setError("Email is required."); return; }
     if (!formData.password) { setError("Password is required."); return; }
@@ -41,12 +44,23 @@ function LoginDialog({ open, onOpenChange, onSwitchToRegister, onSwitchToForgotP
       onOpenChange(false);
       navigate(data.user.role === "admin" ? "/admin" : "/dashboard");
     } catch (err) {
-      const msg = err.response?.data?.message || "Invalid email or password.";
-      setError(msg);
-      toast.error(msg);
+      const status = err.response?.status;
+      if (status === 429) {
+        const resetTime = err.response?.data?.resetTime;
+        setRateLimitReset(resetTime);
+        setError("");
+      } else {
+        const msg = err.response?.data?.message || "Invalid email or password.";
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRateLimitExpire = () => {
+    setRateLimitReset(null);
+    setError("");
   };
 
   const handleOpenChange = (val) => {
@@ -54,6 +68,7 @@ function LoginDialog({ open, onOpenChange, onSwitchToRegister, onSwitchToForgotP
       setFormData({ email: "", password: "" });
       setRememberMe(true);
       setError("");
+      setRateLimitReset(null);
     }
     onOpenChange(val);
   };
@@ -68,11 +83,15 @@ function LoginDialog({ open, onOpenChange, onSwitchToRegister, onSwitchToForgotP
           </DialogDescription>
         </DialogHeader>
 
-        {error && (
+        {rateLimitReset ? (
+          <div className="bg-destructive/10 border border-destructive/20 text-destructive rounded-md px-4 py-3">
+            <RateLimitCountdown resetTime={rateLimitReset} onExpire={handleRateLimitExpire} />
+          </div>
+        ) : error ? (
           <div className="bg-destructive/10 text-destructive text-sm rounded-md px-4 py-2">
             {error}
           </div>
-        )}
+        ) : null}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
