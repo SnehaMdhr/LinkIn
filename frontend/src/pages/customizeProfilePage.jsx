@@ -15,7 +15,7 @@ import ConfirmDialog from "../components/ConfirmDialog";
 import { Button } from "../components/ui/button";
 
 function CustomizeProfilePage() {
-  const { user, login } = useContext(AuthContext);
+  const { user, loading: authLoading, login } = useContext(AuthContext);
   const navigate = useNavigate();
   const toast = useToast();
 
@@ -26,19 +26,20 @@ function CustomizeProfilePage() {
   const [resetOpen, setResetOpen] = useState(false);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!user) {
       navigate("/");
       return;
     }
     loadData();
-  }, [user]);
+  }, [user, authLoading]);
 
   const loadData = async () => {
     try {
       setLoading(true);
       const [custData, linksData] = await Promise.all([
-        getCustomization(user.id).catch(() => DEFAULT_CUSTOMIZATION),
-        getLinks(user.id).catch(() => []),
+        getCustomization().catch(() => DEFAULT_CUSTOMIZATION),
+        getLinks().catch(() => []),
       ]);
       setCustomization({ ...DEFAULT_CUSTOMIZATION, ...custData });
       setLinks(linksData);
@@ -56,7 +57,7 @@ function CustomizeProfilePage() {
   const handleSave = async () => {
     try {
       setSaving(true);
-      const response = await updateCustomization(user.id, customization);
+      const response = await updateCustomization(customization);
       if (response.user) {
         login({ ...user, ...response.user });
       }
@@ -70,7 +71,7 @@ function CustomizeProfilePage() {
 
   const handleReset = async () => {
     try {
-      const response = await resetCustomization(user.id);
+      const response = await resetCustomization();
       setCustomization(DEFAULT_CUSTOMIZATION);
       if (response.user) {
         login({ ...user, ...response.user });
@@ -81,7 +82,7 @@ function CustomizeProfilePage() {
     }
   };
 
-  if (!user) return null;
+  if (authLoading || !user) return null;
 
   return (
     <div className="min-h-screen bg-background">

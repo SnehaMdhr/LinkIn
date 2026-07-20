@@ -16,7 +16,7 @@ import {
 const THEME_OPTIONS = ["light", "dark", "colorful", "minimal"];
 
 function ProfilePage() {
-  const { user, login } = useContext(AuthContext);
+  const { user, loading: authLoading, login } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -37,10 +37,13 @@ function ProfilePage() {
     e.preventDefault();
     setError("");
     setSuccess("");
+
+    if (!formData.name.trim()) { setError("Name is required."); return; }
+
     setLoading(true);
 
     try {
-      const response = await api.put("/profile", { userId: user.id, ...formData });
+      const response = await api.put("/profile", formData);
       // Update context + localStorage with fresh data
       login({ ...user, ...response.data.user });
       toast.success("Profile updated successfully!");
@@ -53,6 +56,7 @@ function ProfilePage() {
     }
   };
 
+  if (authLoading) return null;
   if (!user) {
     navigate("/login");
     return null;

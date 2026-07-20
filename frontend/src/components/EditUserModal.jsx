@@ -78,6 +78,11 @@ export default function EditUserModal({ open, onOpenChange, userId, onUserUpdate
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    if (!formData.name.trim()) { setError("Name is required."); return; }
+    if (!formData.email.trim()) { setError("Email is required."); return; }
+    if (!formData.username.trim()) { setError("Username is required."); return; }
+
     setLoading(true);
 
     try {

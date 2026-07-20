@@ -50,10 +50,13 @@ export default function ProfileEditModal({ open, onOpenChange }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    if (!formData.name.trim()) { setError("Name is required."); return; }
+
     setLoading(true);
 
     try {
-      const response = await api.put("/profile", { userId: user.id, ...formData });
+      const response = await api.put("/profile", formData);
       login({ ...user, ...response.data.user });
       toast.success("Profile updated successfully!");
       onOpenChange(false);

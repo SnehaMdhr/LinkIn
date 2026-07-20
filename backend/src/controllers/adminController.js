@@ -6,7 +6,7 @@ const SALT_ROUNDS = 10;
 
 // @desc  Create a new user
 // @route POST /api/admin/users
-export const createUser = async (req, res) => {
+export const createUser = async (req, res, next) => {
   try {
     const { name, email, username, password, role, status, profileImage } = req.body;
 
@@ -35,13 +35,13 @@ export const createUser = async (req, res) => {
     const { password: _, ...userWithoutPassword } = newUser.toObject();
     res.status(201).json({ message: "User created", user: userWithoutPassword });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    next(error);
   }
 };
 
 // @desc  Get all users (optionally filtered by search query, with pagination)
 // @route GET /api/admin/users?search=xxxx&page=1&limit=10
-export const getAllUsers = async (req, res) => {
+export const getAllUsers = async (req, res, next) => {
   try {
     const { search, page = 1, limit = 10 } = req.query;
     const pageNum = Math.max(1, parseInt(page));
@@ -71,13 +71,13 @@ export const getAllUsers = async (req, res) => {
       totalPages: Math.ceil(total / limitNum),
     });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    next(error);
   }
 };
 
 // @desc  Get single user details + their links
 // @route GET /api/admin/users/:id
-export const getUserDetails = async (req, res) => {
+export const getUserDetails = async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -90,13 +90,13 @@ export const getUserDetails = async (req, res) => {
 
     res.status(200).json({ user, links });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    next(error);
   }
 };
 
 // @desc  Update user (status, role, name, email, username, bio)
 // @route PUT /api/admin/users/:id
-export const updateUser = async (req, res) => {
+export const updateUser = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { status, role, name, email, username, bio, profileImage } = req.body;
@@ -121,13 +121,13 @@ export const updateUser = async (req, res) => {
 
     res.status(200).json({ message: "User updated", user: updatedUser });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    next(error);
   }
 };
 
 // @desc  Delete a user (and their links)
 // @route DELETE /api/admin/users/:id
-export const deleteUser = async (req, res) => {
+export const deleteUser = async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -136,11 +136,10 @@ export const deleteUser = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Clean up their links too, so we don't leave orphaned data
     await Link.deleteMany({ userId: id });
 
     res.status(200).json({ message: "User and their links deleted" });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    next(error);
   }
 };

@@ -17,6 +17,9 @@ function ForgotPasswordPage() {
     e.preventDefault();
     setError("");
     setMessage("");
+
+    if (!email.trim()) { setError("Email is required."); return; }
+
     setLoading(true);
     try {
       const data = await forgotPassword(email);

@@ -1,10 +1,10 @@
 import express from "express";
 import cors from "cors";
-import path from "path";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import cookieParser from "cookie-parser";
 import morgan from "morgan";
+import errorHandler from "./middleware/errorHandler.js";
 import authRoutes from "./routes/authRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
 import linkRoutes from "./routes/linkRoutes.js";
@@ -17,15 +17,10 @@ dotenv.config();
 connectDB();
 
 const app = express();
-app.use(morgan("combined"));
-app.use(cors({
-  origin: process.env.FRONTEND_URL || "http://localhost:3000",
-  credentials: true,
-}));
+app.use(morgan()); // Log HTTP requests to the console
+// Basic middleware (functionality only, no security hardening yet)
+app.use(cors());
 app.use(express.json({ limit: "5mb" }));
-app.use(cookieParser());
-
-app.use("/uploads", express.static(path.join(process.cwd(), "src/uploads")));
 
 // Test route to confirm server is alive
 app.get("/", (req, res) => {
@@ -39,6 +34,8 @@ app.use("/api/links", linkRoutes);
 app.use("/api/user", publicRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/analytics", analyticsRoutes);
+
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
