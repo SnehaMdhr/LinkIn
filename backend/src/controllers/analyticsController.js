@@ -44,12 +44,13 @@ export const trackQrScan = async (req, res, next) => {
   }
 };
 
-// @desc  Get dashboard stats for a user
-// @route GET /api/analytics/stats?userId=xxx
+// @desc  Get dashboard stats for the authenticated user
+// @route GET /api/analytics/stats
 export const getUserStats = async (req, res, next) => {
   try {
-    const { userId } = req.query;
-    if (!userId) return res.status(400).json({ message: "userId is required" });
+    // IDOR fix: always use the authenticated user's ID, ignore query params
+    const userId = req.user.userId;
+    if (!userId) return res.status(400).json({ message: "Not authenticated" });
 
     const [profileViews, linkClicks, qrScans, totalLinksCount] = await Promise.all([
       Analytics.countDocuments({ userId, type: "profile_view" }),
