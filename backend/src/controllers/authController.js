@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import User from "../models/user.js";
 import { validatePassword } from "../utils/validatePassword.js";
+import { sendEmail, buildOtpEmail } from "../utils/email.js";
 
 const SALT_ROUNDS = 10;
 
@@ -135,7 +136,7 @@ export const logoutUser = async (req, res, next) => {
   }
 };
 
-// @desc  Forgot password — generate reset token
+// @desc  Forgot password — generate 6-digit OTP and email it
 // @route POST /api/auth/forgot-password
 export const forgotPassword = async (req, res, next) => {
   try {
@@ -147,35 +148,45 @@ export const forgotPassword = async (req, res, next) => {
 
     const user = await User.findOne({ email: email.trim() });
     if (!user) {
-      return res.status(200).json({ message: "If that email is registered, you will receive a reset link." });
+      // Always return the same message to avoid leaking whether the email exists
+      return res.status(200).json({ message: "If that email is registered, you will receive an OTP." });
     }
 
-    const resetToken = crypto.randomBytes(32).toString("hex");
+    // Generate a 6-digit OTP using crypto (secure random)
+    const otp = crypto.randomInt(100000, 1000000).toString();
 
-    user.resetPasswordToken = resetToken;
-    user.resetPasswordExpire = Date.now() + 3600000;
+    // Store OTP in the user document (reuse resetPasswordToken field)
+    user.resetPasswordToken = otp;
+    user.resetPasswordExpire = Date.now() + 600000; // 10 minutes
     await user.save();
 
-    const resetUrl = `${req.protocol}://${req.get("host")}/reset-password/${resetToken}`;
+    // Send the email with the OTP
+    const emailHtml = buildOtpEmail(otp, user.name);
+    await sendEmail({
+      to: user.email,
+      subject: "Your LinkIn password reset OTP",
+      html: emailHtml,
+    });
 
     res.status(200).json({
-      message: "If that email is registered, you will receive a reset link.",
-      ...(process.env.NODE_ENV !== "production" && { resetUrl }),
+      message: "If that email is registered, you will receive an OTP.",
     });
   } catch (error) {
     next(error);
   }
 };
 
-// @desc  Reset password with token
-// @route POST /api/auth/reset-password/:token
-export const resetPassword = async (req, res, next) => {
-  try {
-    const { token } = req.params;
-    const { password } = req.body;
 
-    if (!password) {
-      return res.status(400).json({ message: "Password is required" });
+export const verifyOtpAndResetPassword = async (req, res, next) => {
+  try {
+    const { email, otp, password, confirmPassword } = req.body;
+
+    if (!email || !otp || !password || !confirmPassword) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    if (password !== confirmPassword) {
+      return res.status(400).json({ message: "Passwords do not match" });
     }
 
     const pwCheck = validatePassword(password);
@@ -184,12 +195,13 @@ export const resetPassword = async (req, res, next) => {
     }
 
     const user = await User.findOne({
-      resetPasswordToken: token,
+      email: email.trim(),
+      resetPasswordToken: otp,
       resetPasswordExpire: { $gt: Date.now() },
     });
 
     if (!user) {
-      return res.status(400).json({ message: "Invalid or expired reset token" });
+      return res.status(400).json({ message: "Invalid or expired OTP. Please request a new one." });
     }
 
     user.password = await bcrypt.hash(password, SALT_ROUNDS);

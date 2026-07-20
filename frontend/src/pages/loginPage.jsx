@@ -4,6 +4,7 @@ import { loginUser } from "../services/authServices";
 import { AuthContext } from "../context/authContext";
 import { useToast } from "../context/toastContext";
 import { Button } from "../components/ui/button";
+import { PasswordInput } from "../components/ui/passwordInput";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card";
 import ThemeDropdown from "../components/ThemeDropdown";
 
@@ -61,9 +62,7 @@ function LoginPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">Password</label>
-              <input type="password" name="password" value={formData.password} onChange={handleChange}
-                className="w-full border border-input rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring"
-                placeholder="••••••••" />
+              <PasswordInput name="password" value={formData.password} onChange={handleChange} placeholder="••••••••" />
             </div>
             <Button type="submit" disabled={loading} className="w-full" size="lg">
               {loading ? "Logging in..." : "Login"}

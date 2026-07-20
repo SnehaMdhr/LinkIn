@@ -12,11 +12,10 @@ import {
   DialogDescription,
 } from "../ui/dialog";
 
-export default function ForgotPasswordDialog({ open, onOpenChange, onSwitchToLogin }) {
+export default function ForgotPasswordDialog({ open, onOpenChange, onSwitchToLogin, onOtpSent }) {
   const toast = useToast();
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
-  const [resetUrl, setResetUrl] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -24,7 +23,6 @@ export default function ForgotPasswordDialog({ open, onOpenChange, onSwitchToLog
     e.preventDefault();
     setError("");
     setMessage("");
-    setResetUrl("");
 
     if (!email.trim()) { setError("Email is required."); return; }
 
@@ -32,10 +30,12 @@ export default function ForgotPasswordDialog({ open, onOpenChange, onSwitchToLog
     try {
       const data = await forgotPassword(email);
       setMessage(data.message);
-      toast.success("Password reset link sent! Check your email.");
-      if (data.resetUrl) {
-        setResetUrl(data.resetUrl);
-      }
+      toast.success("OTP sent! Check your email.");
+
+      // Switch to OTP dialog after a brief delay
+      setTimeout(() => {
+        onOtpSent(email);
+      }, 1000);
     } catch (err) {
       const msg = err.response?.data?.message || "Something went wrong.";
       setError(msg);
@@ -49,7 +49,6 @@ export default function ForgotPasswordDialog({ open, onOpenChange, onSwitchToLog
     if (!val) {
       setEmail("");
       setMessage("");
-      setResetUrl("");
       setError("");
     }
     onOpenChange(val);
@@ -61,7 +60,7 @@ export default function ForgotPasswordDialog({ open, onOpenChange, onSwitchToLog
         <DialogHeader>
           <DialogTitle>Forgot Password</DialogTitle>
           <DialogDescription>
-            Enter your email and we'll send you a link to reset your password.
+            Enter your email and we'll send you a 6-digit OTP to reset your password.
           </DialogDescription>
         </DialogHeader>
 
@@ -74,9 +73,6 @@ export default function ForgotPasswordDialog({ open, onOpenChange, onSwitchToLog
         {message && (
           <div className="bg-primary/10 text-primary text-sm rounded-md px-4 py-2">
             {message}
-            {resetUrl && (
-              <p className="mt-2 text-xs text-primary/70 break-all">{resetUrl}</p>
-            )}
           </div>
         )}
 
@@ -95,7 +91,7 @@ export default function ForgotPasswordDialog({ open, onOpenChange, onSwitchToLog
             </div>
             <div className="flex gap-3 pt-2">
               <Button type="submit" disabled={loading} className="flex-1">
-                {loading ? "Sending..." : "Send Reset Link"}
+                {loading ? "Sending OTP..." : "Send OTP"}
               </Button>
               <Button
                 type="button"
@@ -115,9 +111,9 @@ export default function ForgotPasswordDialog({ open, onOpenChange, onSwitchToLog
               type="button"
               variant="outline"
               className="flex-1"
-              onClick={() => handleOpenChange(false)}
+              onClick={() => onOtpSent(email)}
             >
-              Close
+              Enter OTP
             </Button>
           </div>
         )}

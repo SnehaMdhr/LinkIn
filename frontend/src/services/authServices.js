@@ -18,7 +18,13 @@ export const forgotPassword = async (email) => {
   return response.data;
 };
 
-// @desc  Reset password with token
+// @desc  Verify OTP and reset password
+export const verifyOtpAndResetPassword = async (email, otp, password, confirmPassword) => {
+  const response = await api.post("/auth/verify-otp", { email, otp, password, confirmPassword });
+  return response.data;
+};
+
+// @desc  Reset password with token (legacy — kept for ResetPasswordPage compatibility)
 export const resetPassword = async (token, password) => {
   const response = await api.post(`/auth/reset-password/${token}`, { password });
   return response.data;

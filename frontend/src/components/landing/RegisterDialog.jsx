@@ -3,6 +3,7 @@ import { registerUser } from "../../services/authServices";
 import { useToast } from "../../context/toastContext";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
+import { PasswordInput } from "../ui/passwordInput";
 import { Label } from "../ui/label";
 import {
   Dialog,
@@ -142,9 +143,8 @@ function RegisterDialog({ open, onOpenChange, onSwitchToLogin }) {
           </div>
           <div className="space-y-2">
             <Label htmlFor="reg-password">Password</Label>
-            <Input
+            <PasswordInput
               id="reg-password"
-              type="password"
               name="password"
               value={formData.password}
               onChange={handleChange}
@@ -154,9 +154,8 @@ function RegisterDialog({ open, onOpenChange, onSwitchToLogin }) {
           </div>
           <div className="space-y-2">
             <Label htmlFor="reg-confirm-password">Confirm Password</Label>
-            <Input
+            <PasswordInput
               id="reg-confirm-password"
-              type="password"
               name="confirmPassword"
               value={formData.confirmPassword}
               onChange={handleChange}

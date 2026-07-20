@@ -3,6 +3,7 @@ import { useToast } from "../context/toastContext";
 import { createUser } from "../services/adminServices";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
+import { PasswordInput } from "./ui/passwordInput";
 import { Label } from "./ui/label";
 import {
   Select,
@@ -147,7 +148,7 @@ export default function CreateUserModal({ open, onOpenChange, onUserCreated }) {
 
           <div className="space-y-2">
             <Label htmlFor="create-password">Password</Label>
-            <Input id="create-password" name="password" type="password" value={formData.password} onChange={handleChange} placeholder="Password" required />
+            <PasswordInput id="create-password" name="password" value={formData.password} onChange={handleChange} placeholder="Password" required />
           </div>
 
           <div className="grid grid-cols-2 gap-4">

@@ -13,6 +13,7 @@ import {
   LoginDialog,
   RegisterDialog,
   ForgotPasswordDialog,
+  OtpDialog,
 } from "../components/landing";
 
 function LandingPage() {
@@ -20,6 +21,8 @@ function LandingPage() {
   const [loginOpen, setLoginOpen] = useState(searchParams.get("auth") === "login");
   const [registerOpen, setRegisterOpen] = useState(false);
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
+  const [otpDialogOpen, setOtpDialogOpen] = useState(false);
+  const [otpEmail, setOtpEmail] = useState("");
 
   const openLogin = () => {
     setRegisterOpen(false);
@@ -37,6 +40,25 @@ function LandingPage() {
     setLoginOpen(false);
     setRegisterOpen(false);
     setForgotPasswordOpen(true);
+  };
+
+  const handleOtpSent = (email) => {
+    setForgotPasswordOpen(false);
+    setOtpEmail(email);
+    setOtpDialogOpen(true);
+  };
+
+  const handleOtpClose = (val) => {
+    setOtpDialogOpen(val);
+    if (!val) {
+      setOtpEmail("");
+    }
+  };
+
+  const handleOtpToLogin = () => {
+    setOtpDialogOpen(false);
+    setOtpEmail("");
+    openLogin();
   };
 
   const handleLoginClose = (val) => {
@@ -74,6 +96,13 @@ function LandingPage() {
         open={forgotPasswordOpen}
         onOpenChange={setForgotPasswordOpen}
         onSwitchToLogin={openLogin}
+        onOtpSent={handleOtpSent}
+      />
+      <OtpDialog
+        open={otpDialogOpen}
+        onOpenChange={handleOtpClose}
+        email={otpEmail}
+        onSwitchToLogin={handleOtpToLogin}
       />
     </div>
   );

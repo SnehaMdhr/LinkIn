@@ -5,6 +5,7 @@ import { AuthContext } from "../../context/authContext";
 import { useToast } from "../../context/toastContext";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
+import { PasswordInput } from "../ui/passwordInput";
 import { Label } from "../ui/label";
 import {
   Dialog,
@@ -109,9 +110,8 @@ function LoginDialog({ open, onOpenChange, onSwitchToRegister, onSwitchToForgotP
           </div>
           <div className="space-y-2">
             <Label htmlFor="login-password">Password</Label>
-            <Input
+            <PasswordInput
               id="login-password"
-              type="password"
               name="password"
               value={formData.password}
               onChange={handleChange}
