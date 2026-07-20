@@ -15,6 +15,7 @@ import {
   DialogDescription,
 } from "../ui/dialog";
 import RateLimitCountdown from "../RateLimitCountdown";
+import TurnstileWidget from "../ui/TurnstileWidget";
 
 function RegisterDialog({ open, onOpenChange, onSwitchToLogin }) {
   const [formData, setFormData] = useState({
@@ -27,6 +28,7 @@ function RegisterDialog({ open, onOpenChange, onSwitchToLogin }) {
   const [error, setError] = useState("");
   const [rateLimitReset, setRateLimitReset] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState(null);
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
   const toast = useToast();
@@ -41,7 +43,7 @@ function RegisterDialog({ open, onOpenChange, onSwitchToLogin }) {
     }
     if (!gisInitialized.current) {
       window.google.accounts.id.initialize({
-        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || "338475030074-agovv9ehou4uicr1ji4r0an87g0v8g8d.apps.googleusercontent.com",
+        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
         callback: handleGoogleCredential,
       });
       gisInitialized.current = true;
@@ -90,6 +92,8 @@ function RegisterDialog({ open, onOpenChange, onSwitchToLogin }) {
     if (!/[0-9]/.test(password)) { setError("Password must contain at least one number."); return; }
     if (!/[^A-Za-z0-9]/.test(password)) { setError("Password must contain at least one special character."); return; }
 
+    if (!captchaToken) { setError("Please complete the CAPTCHA verification."); return; }
+
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match.");
       return;
@@ -97,7 +101,7 @@ function RegisterDialog({ open, onOpenChange, onSwitchToLogin }) {
 
     setLoading(true);
     try {
-      await registerUser(formData);
+      await registerUser({ ...formData, captchaToken });
       toast.success("Account created successfully! Please log in.");
       onOpenChange(false);
       onSwitchToLogin();
@@ -122,13 +126,14 @@ function RegisterDialog({ open, onOpenChange, onSwitchToLogin }) {
       setFormData({ name: "", email: "", username: "", password: "", confirmPassword: "" });
       setError("");
       setRateLimitReset(null);
+      setCaptchaToken(null);
     }
     onOpenChange(val);
   };
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create your LinkIn account</DialogTitle>
           <DialogDescription>
@@ -204,6 +209,8 @@ function RegisterDialog({ open, onOpenChange, onSwitchToLogin }) {
               placeholder="Confirm your Password"
             />
           </div>
+          <TurnstileWidget onVerify={setCaptchaToken} />
+
           <div className="flex gap-3 pt-2">
             <Button type="submit" disabled={loading} className="flex-1">
               {loading ? "Registering..." : "Register"}

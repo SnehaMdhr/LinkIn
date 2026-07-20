@@ -15,6 +15,7 @@ import {
   DialogDescription,
 } from "../ui/dialog";
 import RateLimitCountdown from "../RateLimitCountdown";
+import TurnstileWidget from "../ui/TurnstileWidget";
 
 function LoginDialog({ open, onOpenChange, onSwitchToRegister, onSwitchToForgotPassword }) {
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -22,6 +23,7 @@ function LoginDialog({ open, onOpenChange, onSwitchToRegister, onSwitchToForgotP
   const [error, setError] = useState("");
   const [rateLimitReset, setRateLimitReset] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState(null);
   const { login } = useContext(AuthContext);
   const toast = useToast();
   const navigate = useNavigate();
@@ -36,7 +38,7 @@ function LoginDialog({ open, onOpenChange, onSwitchToRegister, onSwitchToForgotP
     }
     if (!gisInitialized.current) {
       window.google.accounts.id.initialize({
-        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || "338475030074-agovv9ehou4uicr1ji4r0an87g0v8g8d.apps.googleusercontent.com",
+        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
         callback: handleGoogleCredential,
       });
       gisInitialized.current = true;
@@ -74,10 +76,11 @@ function LoginDialog({ open, onOpenChange, onSwitchToRegister, onSwitchToForgotP
 
     if (!formData.email.trim()) { setError("Email is required."); return; }
     if (!formData.password) { setError("Password is required."); return; }
+    if (!captchaToken) { setError("Please complete the CAPTCHA verification."); return; }
 
     setLoading(true);
     try {
-      const res = await loginUser(formData);
+      const res = await loginUser({ ...formData, captchaToken });
       const userData = res.user || res.data;
       const token = res.token;
       login(userData, token, rememberMe);
@@ -110,6 +113,7 @@ function LoginDialog({ open, onOpenChange, onSwitchToRegister, onSwitchToForgotP
       setRememberMe(true);
       setError("");
       setRateLimitReset(null);
+      setCaptchaToken(null);
     }
     onOpenChange(val);
   };
@@ -155,8 +159,7 @@ function LoginDialog({ open, onOpenChange, onSwitchToRegister, onSwitchToForgotP
               onChange={handleChange}
               placeholder="••••••••"
             />
-          </div>
-          <div className="flex items-center justify-end">
+          </div>                          <div className="flex items-center justify-end">
             <button
               type="button"
               onClick={onSwitchToForgotPassword}
@@ -165,6 +168,9 @@ function LoginDialog({ open, onOpenChange, onSwitchToRegister, onSwitchToForgotP
               Forgot password?
             </button>
           </div>
+
+          <TurnstileWidget onVerify={setCaptchaToken} />
+
           <div className="flex gap-3 pt-2">
             <Button type="submit" disabled={loading} className="flex-1">
               {loading ? "Logging in..." : "Login"}
