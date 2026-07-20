@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import path from "path";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import cookieParser from "cookie-parser";
@@ -16,12 +17,13 @@ dotenv.config();
 connectDB();
 
 const app = express();
-app.use(morgan()); // Log HTTP requests to the console
-// Basic middleware (functionality only, no security hardening yet)
-app.use(cors());
+app.use(morgan("combined"));
+app.use(cors({
+  origin: process.env.FRONTEND_URL || "http://localhost:3000",
+  credentials: true,
+}));
 app.use(express.json({ limit: "5mb" }));
-app.use(mongoSanitize());
-
+app.use(cookieParser());
 
 app.use("/uploads", express.static(path.join(process.cwd(), "src/uploads")));
 
