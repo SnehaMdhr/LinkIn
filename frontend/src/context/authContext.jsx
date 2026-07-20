@@ -1,6 +1,6 @@
 import { createContext, useState, useEffect } from "react";
 import { applyTheme } from "../utils/theme";
-import api from "../services/api";
+import api, { fetchCsrfToken } from "../services/api";
 
 export const AuthContext = createContext();
 
@@ -9,6 +9,9 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Fetch CSRF token on app start
+    fetchCsrfToken();
+
     // Try to restore user from storage (no token stored — token is in httpOnly cookie)
     const storedUser = localStorage.getItem("linkin_user") || sessionStorage.getItem("linkin_user");
     if (storedUser) {
