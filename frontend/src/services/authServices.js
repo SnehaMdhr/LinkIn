@@ -54,6 +54,12 @@ export const verifyOtpAndResetPassword = async (email, otp, password, confirmPas
   return response.data;
 };
 
+// @desc  Change password (authenticated user)
+export const changePassword = async (data) => {
+  const response = await api.post("/auth/change-password", data);
+  return response.data;
+};
+
 // @desc  Google sign-in with ID token (popup flow)
 export const googleSignIn = async (credential) => {
   const response = await api.post("/auth/google", { credential });

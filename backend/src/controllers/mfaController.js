@@ -136,7 +136,7 @@ export const verifyMfaLogin = async (req, res, next) => {
 
     // Generate JWT after successful MFA verification
     const accessToken = jwt.sign(
-      { userId: user._id, email: user.email, role: user.role },
+      { userId: user._id, email: user.email, role: user.role, tokenVersion: user.tokenVersion },
       process.env.JWT_SECRET,
       { expiresIn: "15d" }
     );

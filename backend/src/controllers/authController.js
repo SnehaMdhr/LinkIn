@@ -150,7 +150,7 @@ export const loginUser = async (req, res, next) => {
     }
 
     const token = jwt.sign(
-      { userId: user._id, email: user.email, role: user.role },
+      { userId: user._id, email: user.email, role: user.role, tokenVersion: user.tokenVersion },
       process.env.JWT_SECRET,
       { expiresIn: "15d" }
     );
@@ -161,7 +161,7 @@ export const loginUser = async (req, res, next) => {
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
-      maxAge: 15 * 24 * 60 * 60 * 1000, // 15 days
+      maxAge: 15 * 24 * 60 * 60 * 1000,
     });
 
     res.status(200).json({
@@ -346,7 +346,7 @@ export const googleSignIn = async (req, res, next) => {
     }
 
     const token = jwt.sign(
-      { userId: user._id, email: user.email, role: user.role },
+      { userId: user._id, email: user.email, role: user.role, tokenVersion: user.tokenVersion },
       process.env.JWT_SECRET,
       { expiresIn: "15d" }
     );
@@ -423,11 +423,70 @@ export const verifyOtpAndResetPassword = async (req, res, next) => {
     user.password = hashedPassword;
     // Add to history, keep only last 5
     user.passwordHistory = [...(user.passwordHistory || []), hashedPassword].slice(-5);
+    user.tokenVersion += 1;
     user.resetPasswordToken = null;
     user.resetPasswordExpire = null;
     await user.save();
 
     res.status(200).json({ message: "Password reset successful. You can now login." });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc  Change password (authenticated user)
+// @route POST /api/auth/change-password
+export const changePassword = async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ message: "Passwords do not match" });
+    }
+
+    const pwCheck = validatePassword(newPassword);
+    if (!pwCheck.valid) {
+      return res.status(400).json({ message: pwCheck.message });
+    }
+
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Current password is incorrect" });
+    }
+
+    if (user.passwordHistory && user.passwordHistory.length > 0) {
+      for (const oldHash of user.passwordHistory) {
+        const isReused = await bcrypt.compare(newPassword, oldHash);
+        if (isReused) {
+          return res.status(400).json({ message: "You cannot reuse any of your last 5 passwords." });
+        }
+      }
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    user.password = hashedPassword;
+    user.passwordHistory = [...(user.passwordHistory || []), hashedPassword].slice(-5);
+    user.tokenVersion += 1;
+    await user.save();
+
+    res.cookie("token", "", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 0,
+    });
+
+    res.status(200).json({ message: "Password changed successfully. Please log in again." });
   } catch (error) {
     next(error);
   }

@@ -1,6 +1,7 @@
 import express from "express";
 import rateLimit from "express-rate-limit";
-import { registerUser, loginUser, logoutUser, forgotPassword, googleSignIn, verifyOtpAndResetPassword } from "../controllers/authController.js";
+import { registerUser, loginUser, logoutUser, forgotPassword, googleSignIn, verifyOtpAndResetPassword, changePassword } from "../controllers/authController.js";
+import { verifyToken } from "../middleware/verifyToken.js";
 import { verifyTurnstile } from "../middleware/verifyTurnstile.js";
 
 const router = express.Router();
@@ -33,5 +34,6 @@ router.post("/google", googleSignIn);
 
 router.post("/forgot-password", forgotPassword);
 router.post("/verify-otp", verifyOtpAndResetPassword);
+router.post("/change-password", verifyToken, changePassword);
 
 export default router;

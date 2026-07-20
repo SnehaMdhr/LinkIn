@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
+import User from "../models/user.js";
 
-const verifyToken = (req, res, next) => {
+const verifyToken = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -11,6 +12,12 @@ const verifyToken = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    const user = await User.findById(decoded.userId).select("tokenVersion").lean();
+    if (!user || user.tokenVersion !== decoded.tokenVersion) {
+      return res.status(401).json({ message: "Session expired. Please log in again." });
+    }
+
     req.user = decoded;
     next();
   } catch (error) {
