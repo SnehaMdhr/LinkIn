@@ -47,7 +47,13 @@ export const registerUser = async (req, res, next) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
-    const user = await User.create({ name: trimmedName, email: trimmedEmail, password: hashedPassword, username });
+    const user = await User.create({
+      name: trimmedName,
+      email: trimmedEmail,
+      password: hashedPassword,
+      username,
+      passwordHistory: [hashedPassword],
+    });
 
     res.status(201).json({
       message: "User registered successfully",
@@ -314,7 +320,21 @@ export const verifyOtpAndResetPassword = async (req, res, next) => {
       return res.status(400).json({ message: "Invalid or expired OTP. Please request a new one." });
     }
 
-    user.password = await bcrypt.hash(password, SALT_ROUNDS);
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+
+    // Password reuse prevention: check against last 5 passwords
+    if (user.passwordHistory && user.passwordHistory.length > 0) {
+      for (const oldHash of user.passwordHistory) {
+        const isReused = await bcrypt.compare(password, oldHash);
+        if (isReused) {
+          return res.status(400).json({ message: "You cannot reuse any of your last 5 passwords." });
+        }
+      }
+    }
+
+    user.password = hashedPassword;
+    // Add to history, keep only last 5
+    user.passwordHistory = [...(user.passwordHistory || []), hashedPassword].slice(-5);
     user.resetPasswordToken = null;
     user.resetPasswordExpire = null;
     await user.save();

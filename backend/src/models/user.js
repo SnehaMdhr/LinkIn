@@ -52,6 +52,10 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    passwordHistory: {
+      type: [String],
+      default: [],
+    },
     profileCustomization: {
       backgroundType: { type: String, default: "gradient" },
       backgroundColor: { type: String, default: "#ffffff" },
