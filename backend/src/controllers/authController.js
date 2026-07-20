@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import bcrypt from "bcrypt";
 import User from "../models/user.js";
+import { validatePassword } from "../utils/validatePassword.js";
 
 const SALT_ROUNDS = 10;
 
@@ -15,6 +16,11 @@ export const registerUser = async (req, res) => {
 
     if (!username || !trimmedEmail || !trimmedName || !password) {
       return res.status(400).json({ message: "All fields are required" });
+    }
+
+    const pwCheck = validatePassword(password);
+    if (!pwCheck.valid) {
+      return res.status(400).json({ message: pwCheck.message });
     }
 
     // Check if user already exists
@@ -134,6 +140,11 @@ export const resetPassword = async (req, res) => {
 
     if (!password) {
       return res.status(400).json({ message: "Password is required" });
+    }
+
+    const pwCheck = validatePassword(password);
+    if (!pwCheck.valid) {
+      return res.status(400).json({ message: pwCheck.message });
     }
 
     const user = await User.findOne({
