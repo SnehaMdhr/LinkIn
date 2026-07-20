@@ -99,6 +99,26 @@ export const loginUser = async (req, res, next) => {
       return res.status(403).json({ message: "This account has been suspended" });
     }
 
+    // If MFA is enabled, return pending MFA status (don't issue JWT yet)
+    if (user.mfaEnabled) {
+      return res.status(200).json({
+        message: "MFA verification required",
+        pendingMfa: true,
+        userId: user._id.toString(),
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          username: user.username,
+          role: user.role,
+          theme: user.theme,
+          bio: user.bio,
+          profileImage: user.profileImage,
+          status: user.status,
+        },
+      });
+    }
+
     const token = jwt.sign(
       { userId: user._id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
@@ -258,6 +278,26 @@ export const googleSignIn = async (req, res, next) => {
 
     if (user.status === "suspended") {
       return res.status(403).json({ message: "This account has been suspended" });
+    }
+
+    // If MFA is enabled, require MFA verification even for Google sign-in
+    if (user.mfaEnabled) {
+      return res.status(200).json({
+        message: "MFA verification required",
+        pendingMfa: true,
+        userId: user._id.toString(),
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          username: user.username,
+          role: user.role,
+          theme: user.theme,
+          bio: user.bio,
+          profileImage: user.profileImage,
+          status: user.status,
+        },
+      });
     }
 
     const token = jwt.sign(

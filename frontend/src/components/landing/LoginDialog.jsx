@@ -16,6 +16,7 @@ import {
 } from "../ui/dialog";
 import RateLimitCountdown from "../RateLimitCountdown";
 import TurnstileWidget from "../ui/TurnstileWidget";
+import MfaVerifyDialog from "../MfaVerifyDialog";
 
 function LoginDialog({ open, onOpenChange, onSwitchToRegister, onSwitchToForgotPassword }) {
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -24,6 +25,7 @@ function LoginDialog({ open, onOpenChange, onSwitchToRegister, onSwitchToForgotP
   const [rateLimitReset, setRateLimitReset] = useState(null);
   const [loading, setLoading] = useState(false);
   const [captchaToken, setCaptchaToken] = useState(null);
+  const [mfaPending, setMfaPending] = useState(null); // { userId, userName, rememberMe }
   const { login } = useContext(AuthContext);
   const toast = useToast();
   const navigate = useNavigate();
@@ -51,6 +53,12 @@ function LoginDialog({ open, onOpenChange, onSwitchToRegister, onSwitchToForgotP
     setError("");
     try {
       const res = await googleSignIn(response.credential);
+      // If MFA is enabled, show MFA dialog instead of logging in directly
+      if (res.pendingMfa) {
+        setMfaPending({ userId: res.userId, userName: res.user?.name, rememberMe: true });
+        setLoading(false);
+        return;
+      }
       const userData = res.user || res.data;
       const token = res.token;
       login(userData, token, true);
@@ -81,6 +89,12 @@ function LoginDialog({ open, onOpenChange, onSwitchToRegister, onSwitchToForgotP
     setLoading(true);
     try {
       const res = await loginUser({ ...formData, captchaToken });
+      // If MFA is enabled, show MFA dialog instead of logging in directly
+      if (res.pendingMfa) {
+        setMfaPending({ userId: res.userId, userName: res.user?.name, rememberMe });
+        setLoading(false);
+        return;
+      }
       const userData = res.user || res.data;
       const token = res.token;
       login(userData, token, rememberMe);
@@ -105,6 +119,10 @@ function LoginDialog({ open, onOpenChange, onSwitchToRegister, onSwitchToForgotP
   const handleRateLimitExpire = () => {
     setRateLimitReset(null);
     setError("");
+  };
+
+  const handleMfaClose = () => {
+    setMfaPending(null);
   };
 
   const handleOpenChange = (val) => {
@@ -222,6 +240,15 @@ function LoginDialog({ open, onOpenChange, onSwitchToRegister, onSwitchToForgotP
           </button>
         </p>
       </DialogContent>
+
+      {/* MFA verification dialog (shown after login when MFA is enabled) */}
+      <MfaVerifyDialog
+        open={!!mfaPending}
+        onOpenChange={handleMfaClose}
+        userId={mfaPending?.userId}
+        userName={mfaPending?.userName}
+        rememberMe={mfaPending?.rememberMe}
+      />
     </Dialog>
   );
 }

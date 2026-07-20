@@ -13,6 +13,7 @@ import publicRoutes from "./routes/publicRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import analyticsRoutes from "./routes/analyticsRoutes.js";
 import { generateCsrfToken, doubleCsrfProtection } from "./middleware/csrf.js";
+import mfaRoutes from "./routes/mfaRoutes.js";
 dotenv.config();
 
 // Connect to MongoDB
@@ -56,9 +57,11 @@ app.get("/api/csrf-token", (req, res) => {
   res.json({ csrfToken: generateCsrfToken(req, res) });
 });
 
-// Public tracking endpoints + auth routes (called before user has CSRF token)
+// Public tracking endpoints + auth + MFA routes (called before user has CSRF token)
 // Auth routes already have rate limiting + captcha verification
+// MFA verify-login is public (needed during login step 2 before user is authenticated)
 app.use("/api/auth", authRoutes);
+app.use("/api/auth/mfa", mfaRoutes);
 app.use("/api/analytics", analyticsRoutes);
 
 // Apply CSRF protection to all other state-changing API routes

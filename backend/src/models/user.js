@@ -56,6 +56,14 @@ const userSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+    totpSecret: {
+      type: String,
+      default: null,
+    },
+    mfaEnabled: {
+      type: Boolean,
+      default: false,
+    },
     profileCustomization: {
       backgroundType: { type: String, default: "gradient" },
       backgroundColor: { type: String, default: "#ffffff" },
