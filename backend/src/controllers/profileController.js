@@ -133,17 +133,28 @@ export const resetCustomization = async (req, res, next) => {
 export const updateProfile = async (req, res, next) => {
   try {
     const userId = req.user.userId;
-    const { name, bio, theme } = req.body;
+
+    // Mass assignment protection: only allow specific fields
+    const ALLOWED_FIELDS = ["name", "bio", "theme", "profileImage"];
 
     const updateData = {};
-    if (name !== undefined) updateData.name = name;
-    if (bio !== undefined) updateData.bio = xss(bio);
-    if (theme !== undefined) updateData.theme = theme;
+    for (const field of ALLOWED_FIELDS) {
+      if (req.body[field] !== undefined) {
+        if (field === "bio") {
+          updateData[field] = xss(req.body[field]);
+        } else {
+          updateData[field] = req.body[field];
+        }
+      }
+    }
 
+    // Handle file upload separately
     if (req.file) {
       updateData.profileImage = `/uploads/${req.file.filename}`;
-    } else if (req.body.profileImage !== undefined) {
-      updateData.profileImage = req.body.profileImage;
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ message: "No valid fields provided to update" });
     }
 
     const updatedUser = await User.findByIdAndUpdate(

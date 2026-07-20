@@ -99,16 +99,20 @@ export const getUserDetails = async (req, res, next) => {
 export const updateUser = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { status, role, name, email, username, bio, profileImage } = req.body;
+
+    // Mass assignment protection: only allow specific fields
+    const ALLOWED_FIELDS = ["status", "role", "name", "email", "username", "bio", "profileImage"];
 
     const updateFields = {};
-    if (status) updateFields.status = status;
-    if (role) updateFields.role = role;
-    if (name) updateFields.name = name;
-    if (email) updateFields.email = email;
-    if (username) updateFields.username = username;
-    if (bio !== undefined) updateFields.bio = bio;
-    if (profileImage !== undefined) updateFields.profileImage = profileImage;
+    for (const field of ALLOWED_FIELDS) {
+      if (req.body[field] !== undefined) {
+        updateFields[field] = req.body[field];
+      }
+    }
+
+    if (Object.keys(updateFields).length === 0) {
+      return res.status(400).json({ message: "No valid fields provided to update" });
+    }
 
     const updatedUser = await User.findByIdAndUpdate(id, updateFields, {
       new: true,
