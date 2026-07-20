@@ -24,6 +24,12 @@ export const verifyOtpAndResetPassword = async (email, otp, password, confirmPas
   return response.data;
 };
 
+// @desc  Google sign-in with ID token (popup flow)
+export const googleSignIn = async (credential) => {
+  const response = await api.post("/auth/google", { credential });
+  return response.data;
+};
+
 // @desc  Reset password with token (legacy — kept for ResetPasswordPage compatibility)
 export const resetPassword = async (token, password) => {
   const response = await api.post(`/auth/reset-password/${token}`, { password });

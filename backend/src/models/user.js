@@ -13,12 +13,16 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: true,
+      default: "", // Empty for OAuth users
     },
     username: {
       type: String,
       required: true,
       unique: true,
+    },
+    googleId: {
+      type: String,
+      default: null,
     },
     bio: {
       type: String,

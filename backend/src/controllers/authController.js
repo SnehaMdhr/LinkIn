@@ -1,9 +1,17 @@
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 import crypto from "crypto";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { OAuth2Client } from "google-auth-library";
 import User from "../models/user.js";
 import { validatePassword } from "../utils/validatePassword.js";
 import { sendEmail, buildOtpEmail } from "../utils/email.js";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+const googleClient = new OAuth2Client();
 
 const SALT_ROUNDS = 10;
 
@@ -119,8 +127,6 @@ export const loginUser = async (req, res, next) => {
   }
 };
 
-// @desc  Logout user — clear JWT cookie
-// @route POST /api/auth/logout
 export const logoutUser = async (req, res, next) => {
   try {
     res.cookie("token", "", {
@@ -136,8 +142,6 @@ export const logoutUser = async (req, res, next) => {
   }
 };
 
-// @desc  Forgot password — generate 6-digit OTP and email it
-// @route POST /api/auth/forgot-password
 export const forgotPassword = async (req, res, next) => {
   try {
     const { email } = req.body;
@@ -177,6 +181,112 @@ export const forgotPassword = async (req, res, next) => {
 };
 
 
+// @desc  Google sign-in via ID token (popup flow — no redirect URI needed)
+// @route POST /api/auth/google
+export const googleSignIn = async (req, res, next) => {
+  try {
+    const { credential } = req.body;
+    if (!credential) {
+      return res.status(400).json({ message: "Google credential is required" });
+    }
+
+    // Load client ID from env or JSON file
+    let clientId = process.env.GOOGLE_CLIENT_ID;
+    if (!clientId) {
+      const jsonPath = path.resolve(__dirname, "../config/google-credentials.json");
+      if (fs.existsSync(jsonPath)) {
+        try {
+          const json = JSON.parse(fs.readFileSync(jsonPath, "utf8"));
+          const web = json.web || json.installed || json;
+          clientId = web.client_id;
+        } catch (err) {
+          console.warn("Failed to parse google-credentials.json:", err.message);
+        }
+      }
+    }
+
+    // Verify the Google ID token
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: clientId,
+    });
+
+    const payload = ticket.getPayload();
+    const { email, name, picture, sub: googleId } = payload;
+
+    if (!email) {
+      return res.status(400).json({ message: "Google account has no email" });
+    }
+
+    // Find or create user
+    let user = await User.findOne({ email });
+
+    if (user) {
+      if (!user.googleId) {
+        user.googleId = googleId;
+        if (!user.profileImage && picture) {
+          user.profileImage = picture;
+        }
+        await user.save();
+      }
+    } else {
+      const baseUsername = email.split("@")[0];
+      let username = baseUsername;
+      let counter = 1;
+      while (await User.findOne({ username })) {
+        username = `${baseUsername}${counter}`;
+        counter++;
+      }
+
+      user = await User.create({
+        name,
+        email,
+        username,
+        googleId,
+        password: "",
+        profileImage: picture || "",
+      });
+    }
+
+    if (user.status === "suspended") {
+      return res.status(403).json({ message: "This account has been suspended" });
+    }
+
+    const token = jwt.sign(
+      { userId: user._id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "15d" }
+    );
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 15 * 24 * 60 * 60 * 1000,
+    });
+
+    res.status(200).json({
+      message: "Google sign-in successful",
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        username: user.username,
+        role: user.role,
+        theme: user.theme,
+        bio: user.bio,
+        profileImage: user.profileImage,
+        status: user.status,
+      },
+    });
+  } catch (error) {
+    console.error("Google sign-in error:", error);
+    return res.status(401).json({ message: "Invalid Google credential" });
+  }
+};
+
+// @desc  Verify OTP and reset password
 export const verifyOtpAndResetPassword = async (req, res, next) => {
   try {
     const { email, otp, password, confirmPassword } = req.body;

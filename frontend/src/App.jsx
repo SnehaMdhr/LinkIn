@@ -5,6 +5,7 @@ import RegisterPage from "./pages/registerPage";
 import LoginPage from "./pages/loginPage";
 import ForgotPasswordPage from "./pages/forgotPasswordPage";
 import ResetPasswordPage from "./pages/resetPasswordPage";
+
 import DashboardPage from "./pages/dashboardPage";
 import ProfilePage from "./pages/profilePage";
 import CustomizeProfilePage from "./pages/customizeProfilePage";
@@ -25,7 +26,7 @@ function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
- 
+
 
       {/* User routes (no auth protection yet — Day 1) */}
       <Route path="/dashboard" element={<DashboardPage />} />

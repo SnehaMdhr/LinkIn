@@ -1,6 +1,6 @@
 import express from "express";
 import rateLimit from "express-rate-limit";
-import { registerUser, loginUser, logoutUser, forgotPassword, verifyOtpAndResetPassword } from "../controllers/authController.js";
+import { registerUser, loginUser, logoutUser, forgotPassword, googleSignIn, verifyOtpAndResetPassword } from "../controllers/authController.js";
 
 const router = express.Router();
 
@@ -27,6 +27,9 @@ const authLimiter = rateLimit({
 router.post("/register", authLimiter, registerUser);
 router.post("/login", authLimiter, loginUser);
 router.post("/logout", logoutUser);
+// Google sign-in (popup flow — no redirect URI needed)
+router.post("/google", googleSignIn);
+
 router.post("/forgot-password", forgotPassword);
 router.post("/verify-otp", verifyOtpAndResetPassword);
 
