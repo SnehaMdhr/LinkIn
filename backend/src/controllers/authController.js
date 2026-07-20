@@ -110,6 +110,7 @@ export const loginUser = async (req, res, next) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
+      path: "/",
       maxAge: 15 * 24 * 60 * 60 * 1000, // 15 days
     });
 
@@ -139,6 +140,7 @@ export const logoutUser = async (req, res, next) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
+      path: "/",
       maxAge: 0,
     });
 
@@ -268,6 +270,7 @@ export const googleSignIn = async (req, res, next) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
+      path: "/",
       maxAge: 15 * 24 * 60 * 60 * 1000,
     });
 
