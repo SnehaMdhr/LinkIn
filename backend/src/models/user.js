@@ -56,6 +56,14 @@ const userSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+    loginAttempts: {
+      type: Number,
+      default: 0,
+    },
+    lockUntil: {
+      type: Date,
+      default: null,
+    },
     totpSecret: {
       type: String,
       default: null,

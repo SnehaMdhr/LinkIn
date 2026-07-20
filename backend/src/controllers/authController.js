@@ -90,9 +90,39 @@ export const loginUser = async (req, res, next) => {
       return res.status(400).json({ message: "Invalid email or password" });
     }
 
+    // Check if account is temporarily locked
+    if (user.lockUntil && user.lockUntil > Date.now()) {
+      const msRemaining = user.lockUntil - Date.now();
+      const minutes = Math.ceil(msRemaining / 60000);
+      return res.status(429).json({
+        message: `Account temporarily locked. Too many failed attempts. Try again in ${minutes} minute(s).`,
+        locked: true,
+      });
+    }
+
+    // Reset lock if lock period has expired
+    if (user.lockUntil && user.lockUntil < Date.now()) {
+      user.loginAttempts = 0;
+      user.lockUntil = null;
+      await user.save();
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
+      user.loginAttempts += 1;
+      if (user.loginAttempts >= 15) {
+        user.lockUntil = Date.now() + 15 * 60 * 1000;
+        user.loginAttempts = 0;
+      }
+      await user.save();
       return res.status(400).json({ message: "Invalid email or password" });
+    }
+
+    // Reset login attempts on successful login
+    if (user.loginAttempts > 0 || user.lockUntil) {
+      user.loginAttempts = 0;
+      user.lockUntil = null;
+      await user.save();
     }
 
     if (user.status === "suspended") {
@@ -278,6 +308,21 @@ export const googleSignIn = async (req, res, next) => {
 
     if (user.status === "suspended") {
       return res.status(403).json({ message: "This account has been suspended" });
+    }
+
+    // Check account lockout (applies even to OAuth to prevent bypass)
+    if (user.lockUntil && user.lockUntil > Date.now()) {
+      const msRemaining = user.lockUntil - Date.now();
+      const minutes = Math.ceil(msRemaining / 60000);
+      return res.status(429).json({
+        message: `Account temporarily locked. Try again in ${minutes} minute(s).`,
+        locked: true,
+      });
+    }
+    if (user.lockUntil && user.lockUntil < Date.now()) {
+      user.loginAttempts = 0;
+      user.lockUntil = null;
+      await user.save();
     }
 
     // If MFA is enabled, require MFA verification even for Google sign-in
