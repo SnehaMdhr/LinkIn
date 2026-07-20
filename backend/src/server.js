@@ -17,10 +17,20 @@ dotenv.config();
 connectDB();
 
 const app = express();
-app.use(morgan()); // Log HTTP requests to the console
-// Basic middleware (functionality only, no security hardening yet)
-app.use(cors());
+app.use(morgan("combined"));
+app.use(cors({
+  origin: (origin, callback) => {
+    const allowed = ["http://localhost:3000", "http://localhost:3001"];
+    if (!origin || allowed.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+}));
 app.use(express.json({ limit: "5mb" }));
+app.use(cookieParser());
 
 // Test route to confirm server is alive
 app.get("/", (req, res) => {

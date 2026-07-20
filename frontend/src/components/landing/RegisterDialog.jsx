@@ -54,8 +54,7 @@ function RegisterDialog({ open, onOpenChange, onSwitchToLogin }) {
 
     setLoading(true);
     try {
-      const { confirmPassword, ...dataToSend } = formData;
-      await registerUser(dataToSend);
+      await registerUser(formData);
       toast.success("Account created successfully! Please log in.");
       onOpenChange(false);
       onSwitchToLogin();

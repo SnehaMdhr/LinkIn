@@ -10,13 +10,21 @@ const SALT_ROUNDS = 10;
 // @route POST /api/auth/register
 export const registerUser = async (req, res, next) => {
   try {
-    const { name, email, password, username: rawUsername } = req.body;
+    const { name, email, password, confirmPassword, username: rawUsername } = req.body;
     const username = rawUsername?.trim();
     const trimmedEmail = email?.trim();
     const trimmedName = name?.trim();
 
     if (!username || !trimmedEmail || !trimmedName || !password) {
       return res.status(400).json({ message: "All fields are required" });
+    }
+
+    if (!confirmPassword) {
+      return res.status(400).json({ message: "Confirm password is required" });
+    }
+
+    if (password !== confirmPassword) {
+      return res.status(400).json({ message: "Passwords do not match" });
     }
 
     const pwCheck = validatePassword(password);
@@ -92,6 +100,7 @@ export const loginUser = async (req, res, next) => {
 
     res.status(200).json({
       message: "Login successful",
+      token,
       user: {
         id: user._id,
         name: user.name,

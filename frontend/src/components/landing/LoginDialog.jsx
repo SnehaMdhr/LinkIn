@@ -38,11 +38,13 @@ function LoginDialog({ open, onOpenChange, onSwitchToRegister, onSwitchToForgotP
 
     setLoading(true);
     try {
-      const data = await loginUser(formData);
-      login(data.user, data.token, rememberMe);
-      toast.success(`Welcome back, ${data.user.name}!`);
+      const res = await loginUser(formData);
+      const userData = res.user || res.data;
+      const token = res.token;
+      login(userData, token, rememberMe);
+      toast.success(`Welcome back, ${userData.name}!`);
       onOpenChange(false);
-      navigate(data.user.role === "admin" ? "/admin" : "/dashboard");
+      navigate(userData.role === "admin" ? "/admin" : "/dashboard");
     } catch (err) {
       const status = err.response?.status;
       if (status === 429) {
