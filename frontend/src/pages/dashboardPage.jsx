@@ -19,7 +19,7 @@ import Skeleton from "../components/Skeleton";
 import logo from "../assets/logo.png";
 
 function DashboardPage() {
-  const { user, logout } = useContext(AuthContext);
+  const { user, loading: authLoading, logout } = useContext(AuthContext);
   const navigate = useNavigate();
   const toast = useToast();
 
@@ -44,18 +44,19 @@ function DashboardPage() {
   }, [links, search]);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!user) {
       navigate("/");
       return;
     }
     fetchLinks();
     fetchStats();
-  }, [user]);
+  }, [user, authLoading]);
 
   const fetchLinks = async () => {
     try {
       setLoading(true);
-      const data = await getLinks(user.id);
+      const data = await getLinks();
       setLinks(data);
     } catch (err) {
       toast.error("Failed to load links.");
@@ -88,7 +89,7 @@ function DashboardPage() {
     navigate("/");
   };
 
-  if (!user) return null; 
+  if (authLoading || !user) return null;
 
   return (
     <div className="min-h-screen bg-background">

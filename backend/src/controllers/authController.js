@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 import User from "../models/user.js";
 import { validatePassword } from "../utils/validatePassword.js";
 
@@ -7,7 +8,7 @@ const SALT_ROUNDS = 10;
 
 // @desc  Register a new user
 // @route POST /api/auth/register
-export const registerUser = async (req, res) => {
+export const registerUser = async (req, res, next) => {
   try {
     const { name, email, password, username: rawUsername } = req.body;
     const username = rawUsername?.trim();
@@ -23,15 +24,12 @@ export const registerUser = async (req, res) => {
       return res.status(400).json({ message: pwCheck.message });
     }
 
-    // Check if user already exists
     const existingUser = await User.findOne({ $or: [{ email: trimmedEmail }, { username }] });
     if (existingUser) {
       return res.status(400).json({ message: "User with this email or username already exists" });
     }
 
-    // Hash the password before saving — never store plain text
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
-
     const user = await User.create({ name: trimmedName, email: trimmedEmail, password: hashedPassword, username });
 
     res.status(201).json({
@@ -49,13 +47,13 @@ export const registerUser = async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    next(error);
   }
 };
 
 // @desc  Login user
 // @route POST /api/auth/login
-export const loginUser = async (req, res) => {
+export const loginUser = async (req, res, next) => {
   try {
     const { email, password } = req.body;
     const trimmedEmail = email?.trim();
@@ -69,7 +67,6 @@ export const loginUser = async (req, res) => {
       return res.status(400).json({ message: "Invalid email or password" });
     }
 
-    // Compare submitted password against the stored hash
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid email or password" });
@@ -79,9 +76,15 @@ export const loginUser = async (req, res) => {
       return res.status(403).json({ message: "This account has been suspended" });
     }
 
-    // NOTE: no JWT yet — returning basic user info directly (Day 1, no auth tokens)
+    const token = jwt.sign(
+      { userId: user._id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "15d" }
+    );
+
     res.status(200).json({
       message: "Login successful",
+      token,
       user: {
         id: user._id,
         name: user.name,
@@ -95,13 +98,13 @@ export const loginUser = async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    next(error);
   }
 };
 
 // @desc  Forgot password — generate reset token
 // @route POST /api/auth/forgot-password
-export const forgotPassword = async (req, res) => {
+export const forgotPassword = async (req, res, next) => {
   try {
     const { email } = req.body;
 
@@ -117,7 +120,7 @@ export const forgotPassword = async (req, res) => {
     const resetToken = crypto.randomBytes(32).toString("hex");
 
     user.resetPasswordToken = resetToken;
-    user.resetPasswordExpire = Date.now() + 3600000; // 1 hour
+    user.resetPasswordExpire = Date.now() + 3600000;
     await user.save();
 
     const resetUrl = `${req.protocol}://${req.get("host")}/reset-password/${resetToken}`;
@@ -127,13 +130,13 @@ export const forgotPassword = async (req, res) => {
       ...(process.env.NODE_ENV !== "production" && { resetUrl }),
     });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    next(error);
   }
 };
 
 // @desc  Reset password with token
 // @route POST /api/auth/reset-password/:token
-export const resetPassword = async (req, res) => {
+export const resetPassword = async (req, res, next) => {
   try {
     const { token } = req.params;
     const { password } = req.body;
@@ -163,6 +166,6 @@ export const resetPassword = async (req, res) => {
 
     res.status(200).json({ message: "Password reset successful. You can now login." });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    next(error);
   }
 };

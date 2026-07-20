@@ -59,10 +59,13 @@ export default function AddLinkModal({ open, onOpenChange, onLinkAdded }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    if (!formData.url.trim()) { setError("URL is required."); return; }
+
     setLoading(true);
 
     try {
-      await createLink({ ...formData, userId: user.id });
+      await createLink(formData);
       toast.success("Link added successfully!");
       onOpenChange(false);
       if (onLinkAdded) onLinkAdded();

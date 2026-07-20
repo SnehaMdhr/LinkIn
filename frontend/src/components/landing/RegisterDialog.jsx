@@ -11,6 +11,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "../ui/dialog";
+import RateLimitCountdown from "../RateLimitCountdown";
 
 function RegisterDialog({ open, onOpenChange, onSwitchToLogin }) {
   const [formData, setFormData] = useState({
@@ -21,6 +22,7 @@ function RegisterDialog({ open, onOpenChange, onSwitchToLogin }) {
     confirmPassword: "",
   });
   const [error, setError] = useState("");
+  const [rateLimitReset, setRateLimitReset] = useState(null);
   const [loading, setLoading] = useState(false);
   const toast = useToast();
 
@@ -30,6 +32,7 @@ function RegisterDialog({ open, onOpenChange, onSwitchToLogin }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setRateLimitReset(null);
 
     // Client-side validation for all fields
     const { name, email, username, password, confirmPassword } = formData;
@@ -37,6 +40,12 @@ function RegisterDialog({ open, onOpenChange, onSwitchToLogin }) {
       setError("Please fill in all fields.");
       return;
     }
+
+    if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
+    if (!/[A-Z]/.test(password)) { setError("Password must contain at least one uppercase letter."); return; }
+    if (!/[a-z]/.test(password)) { setError("Password must contain at least one lowercase letter."); return; }
+    if (!/[0-9]/.test(password)) { setError("Password must contain at least one number."); return; }
+    if (!/[^A-Za-z0-9]/.test(password)) { setError("Password must contain at least one special character."); return; }
 
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match.");
@@ -51,9 +60,16 @@ function RegisterDialog({ open, onOpenChange, onSwitchToLogin }) {
       onOpenChange(false);
       onSwitchToLogin();
     } catch (err) {
-      const msg = err.response?.data?.message || "Something went wrong.";
-      setError(msg);
-      toast.error(msg);
+      const status = err.response?.status;
+      if (status === 429) {
+        const resetTime = err.response?.data?.resetTime;
+        setRateLimitReset(resetTime);
+        setError("");
+      } else {
+        const msg = err.response?.data?.message || "Something went wrong.";
+        setError(msg);
+        toast.error(msg);
+      }
     } finally {
       setLoading(false);
     }
@@ -63,6 +79,7 @@ function RegisterDialog({ open, onOpenChange, onSwitchToLogin }) {
     if (!val) {
       setFormData({ name: "", email: "", username: "", password: "", confirmPassword: "" });
       setError("");
+      setRateLimitReset(null);
     }
     onOpenChange(val);
   };
@@ -77,11 +94,15 @@ function RegisterDialog({ open, onOpenChange, onSwitchToLogin }) {
           </DialogDescription>
         </DialogHeader>
 
-        {error && (
+        {rateLimitReset ? (
+          <div className="bg-destructive/10 border border-destructive/20 text-destructive rounded-md px-4 py-3">
+            <RateLimitCountdown resetTime={rateLimitReset} onExpire={() => { setRateLimitReset(null); setError(""); }} />
+          </div>
+        ) : error ? (
           <div className="bg-destructive/10 text-destructive text-sm rounded-md px-4 py-2">
             {error}
           </div>
-        )}
+        ) : null}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -130,6 +151,7 @@ function RegisterDialog({ open, onOpenChange, onSwitchToLogin }) {
               onChange={handleChange}
               placeholder="Enter your Password"
             />
+            <p className="text-xs text-muted-foreground">Min 6 chars, 1 uppercase, 1 lowercase, 1 number, 1 special character.</p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="reg-confirm-password">Confirm Password</Label>

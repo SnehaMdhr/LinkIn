@@ -77,6 +77,9 @@ export default function EditLinkModal({ open, onOpenChange, linkId, onLinkUpdate
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    if (!formData.url.trim()) { setError("URL is required."); return; }
+
     setLoading(true);
 
     try {
