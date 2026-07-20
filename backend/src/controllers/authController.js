@@ -80,9 +80,16 @@ export const loginUser = async (req, res) => {
       { expiresIn: "15d" }
     );
 
+    // Set JWT as httpOnly cookie
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 15 * 24 * 60 * 60 * 1000, // 15 days
+    });
+
     res.status(200).json({
       message: "Login successful",
-      token,
       user: {
         id: user._id,
         name: user.name,
@@ -97,6 +104,23 @@ export const loginUser = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// @desc  Logout user — clear JWT cookie
+// @route POST /api/auth/logout
+export const logoutUser = async (req, res, next) => {
+  try {
+    res.cookie("token", "", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 0,
+    });
+
+    res.status(200).json({ message: "Logged out successfully" });
+  } catch (error) {
+    next(error);
   }
 };
 

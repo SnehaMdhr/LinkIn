@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
+import cookieParser from "cookie-parser";
 import morgan from "morgan";
 import authRoutes from "./routes/authRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
@@ -19,6 +20,10 @@ app.use(morgan()); // Log HTTP requests to the console
 // Basic middleware (functionality only, no security hardening yet)
 app.use(cors());
 app.use(express.json({ limit: "5mb" }));
+app.use(mongoSanitize());
+
+
+app.use("/uploads", express.static(path.join(process.cwd(), "src/uploads")));
 
 // Test route to confirm server is alive
 app.get("/", (req, res) => {
