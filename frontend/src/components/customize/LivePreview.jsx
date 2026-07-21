@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import { QRCodeCanvas } from "qrcode.react";
 import { getGradientCSS, getBlurValue } from "../../config/customization";
 import { loadFont, getFontFamily } from "../../utils/fonts";
@@ -25,11 +26,11 @@ function getButtonClasses(style, width, animation, accentColor, btnTextColor) {
 
   const animClass =
     animation === "lift"
-      ? "hover:-translate-y-1 hover:shadow-lg"
+      ? "hover:-translate-y-1 hover:shadow-lg hover:shadow-black/20"
       : animation === "scale"
       ? "hover:scale-105"
       : animation === "glow"
-      ? "hover:shadow-lg"
+      ? "hover:shadow-lg hover:shadow-black/20"
       : "";
 
   const styleMap = {
@@ -37,7 +38,7 @@ function getButtonClasses(style, width, animation, accentColor, btnTextColor) {
     rounded: `${base} rounded-xl ${animClass}`,
     square: `${base} rounded-md ${animClass}`,
     outline: `${base} rounded-full border-2 bg-transparent ${animClass}`,
-    soft: `${base} rounded-xl shadow-md ${animClass}`,
+    soft: `${base} rounded-xl shadow-lg shadow-black/10 ${animClass}`,
     glass: `${base} rounded-xl backdrop-blur-sm bg-white/10 border border-white/20 ${animClass}`,
   };
 
@@ -51,7 +52,7 @@ function getButtonClasses(style, width, animation, accentColor, btnTextColor) {
   return { className: styleMap[style] || styleMap.pill, style: outlineStyle };
 }
 
-export default function LivePreview({ customization, user, links }) {
+export default function LivePreview({ customization, user, links, isMobile }) {
   const c = customization;
   loadFont(c.font);
 
@@ -60,10 +61,13 @@ export default function LivePreview({ customization, user, links }) {
 
   const backgroundStyle = (() => {
     if (c.backgroundType === "solid") return { backgroundColor: c.backgroundColor };
-    if (c.backgroundType === "gradient") return { background: getGradientCSS(c.backgroundGradient, c.customGradientFrom, c.customGradientTo) };
+    if (c.backgroundType === "gradient")
+      return {
+        background: getGradientCSS(c.backgroundGradient, c.customGradientFrom, c.customGradientTo),
+      };
     if (c.backgroundType === "image" && c.backgroundImage)
       return {
-        backgroundImage: `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url(${c.backgroundImage})`,
+        backgroundImage: `linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.2)), url(${c.backgroundImage})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
@@ -78,32 +82,40 @@ export default function LivePreview({ customization, user, links }) {
     border: `${c.cardBorderWidth || "1px"} solid ${c.cardBorderColor || "#ffffff"}`,
   };
 
-  const animClass =
-    c.animation === "fade"
-      ? "animate-md-fade-in"
-      : c.animation === "slide"
-      ? "animate-[slide-up_500ms_ease-out]"
-      : "";
+  const containerClass = isMobile
+    ? "w-full h-full"
+    : "w-full h-full rounded-2xl";
 
   return (
-    <div
-      className="w-full min-h-[500px] rounded-2xl overflow-hidden relative"
+    <motion.div
+      className={`${containerClass} overflow-hidden relative`}
       style={{ ...backgroundStyle, fontFamily: getFontFamily(c.font) }}
+      layout
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
     >
-      <div className="min-h-[500px] flex flex-col items-center px-4 py-10 relative z-10">
-        <div
-          className={`w-full max-w-sm text-center ${animClass}`}
+      {/* Subtle pattern overlay for depth */}
+      <div className="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[length:20px_20px] pointer-events-none" />
+
+      {/* Centered container — fills the preview area while card auto-heights */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center px-6 py-10">
+        {/* Profile card — height is auto, determined by content */}
+        {/* `overflow-hidden` clips the banner layout's negative margins to the
+            card's rounded corners WITHOUT hiding the border (border is on the
+            border-box, while overflow clips the padding-box). */}
+        <motion.div
+          className="w-full max-w-[420px] rounded-2xl shadow-2xl shadow-black/20 overflow-hidden p-8"
           style={cardStyle}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
         >
-          <div className="p-6">
-            {/* Layout: side-by-side */}
+          <div className="flex flex-col gap-2">
+            {/* ─── Profile Header ─── */}
             {c.layout === "side-by-side" ? (
-              <div className="flex items-center gap-4 mb-3">
+              <div className="flex items-center gap-5">
                 {c.showProfilePicture && (
                   <div
-                    className={`w-16 h-16 shrink-0 flex items-center justify-center text-xl font-bold overflow-hidden ${getAvatarClasses(
-                      c.avatarShape
-                    )}`}
+                    className={`w-20 h-20 shrink-0 flex items-center justify-center text-2xl font-bold overflow-hidden ring-4 ring-white/20 ${getAvatarClasses(c.avatarShape)}`}
                     style={{ backgroundColor: `${c.accentColor}33`, color: c.accentColor }}
                   >
                     {user?.profileImage ? (
@@ -113,22 +125,26 @@ export default function LivePreview({ customization, user, links }) {
                     )}
                   </div>
                 )}
-                <div className="text-left">
-                  <h1 className="text-lg font-bold" style={{ color: tc }}>{user?.name || "Your Name"}</h1>
-                  <p className="text-xs" style={{ color: tcs }}>@{user?.username || "username"}</p>
+                <div className="flex flex-col gap-1">
+                  <h1 className="text-xl font-bold" style={{ color: tc }}>
+                    {user?.name || "Your Name"}
+                  </h1>
+                  {c.showUsername !== false && (
+                    <p className="text-sm" style={{ color: tcs }}>
+                      @{user?.username || "username"}
+                    </p>
+                  )}
                 </div>
               </div>
             ) : c.layout === "banner" ? (
-              <div className="mb-4">
+              <div className="flex flex-col items-center">
                 <div
-                  className="w-full h-20 rounded-t-lg -mx-6 -mt-6 mb-3"
-                  style={{ background: `linear-gradient(135deg, ${c.accentColor}44, ${c.accentColor}11)` }}
+                  className="w-full h-24 rounded-t-2xl -mx-8 -mt-8 mb-0"
+                  style={{ background: `linear-gradient(135deg, ${c.accentColor}55, ${c.accentColor}22)` }}
                 />
                 {c.showProfilePicture && (
                   <div
-                    className={`w-16 h-16 mx-auto -mt-10 relative flex items-center justify-center text-xl font-bold overflow-hidden ring-4 ring-white/30 ${getAvatarClasses(
-                      c.avatarShape
-                    )}`}
+                    className={`w-20 h-20 -mt-14 relative z-10 flex items-center justify-center text-2xl font-bold overflow-hidden ring-4 ring-white/30 shadow-lg ${getAvatarClasses(c.avatarShape)}`}
                     style={{ backgroundColor: `${c.accentColor}33`, color: c.accentColor }}
                   >
                     {user?.profileImage ? (
@@ -138,17 +154,23 @@ export default function LivePreview({ customization, user, links }) {
                     )}
                   </div>
                 )}
-                <h1 className="text-lg font-bold mt-2" style={{ color: tc }}>{user?.name || "Your Name"}</h1>
-                <p className="text-xs" style={{ color: tcs }}>@{user?.username || "username"}</p>
+                <div className="flex flex-col gap-1 items-center mt-2">
+                  <h1 className="text-xl font-bold" style={{ color: tc }}>
+                    {user?.name || "Your Name"}
+                  </h1>
+                  {c.showUsername !== false && (
+                    <p className="text-sm" style={{ color: tcs }}>
+                      @{user?.username || "username"}
+                    </p>
+                  )}
+                </div>
               </div>
             ) : (
               /* Classic */
-              <>
+              <div className="flex flex-col items-center gap-4">
                 {c.showProfilePicture && (
                   <div
-                    className={`w-20 h-20 mx-auto flex items-center justify-center text-2xl font-bold overflow-hidden ring-4 mb-3 ${getAvatarClasses(
-                      c.avatarShape
-                    )}`}
+                    className={`w-24 h-24 flex items-center justify-center text-3xl font-bold overflow-hidden ring-4 ring-white/20 shadow-lg ${getAvatarClasses(c.avatarShape)}`}
                     style={{ backgroundColor: `${c.accentColor}33`, color: c.accentColor }}
                   >
                     {user?.profileImage ? (
@@ -158,25 +180,32 @@ export default function LivePreview({ customization, user, links }) {
                     )}
                   </div>
                 )}
-                <h1 className="text-lg font-bold" style={{ color: tc }}>{user?.name || "Your Name"}</h1>
-                <p className="text-xs" style={{ color: tcs }}>@{user?.username || "username"}</p>
-              </>
+                <div className="flex flex-col gap-1 items-center">
+                  <h1 className="text-xl font-bold" style={{ color: tc }}>
+                    {user?.name || "Your Name"}
+                  </h1>
+                  {c.showUsername !== false && (
+                    <p className="text-sm" style={{ color: tcs }}>
+                      @{user?.username || "username"}
+                    </p>
+                  )}
+                </div>
+              </div>
             )}
 
-            {/* Bio */}
+            {/* ─── Bio (hidden if empty or disabled) ─── */}
             {c.showBio && user?.bio && (
-              <p className="mt-2 text-xs leading-relaxed max-w-[240px] mx-auto" style={{ color: tcs }}>
+              <p className="text-sm leading-relaxed max-w-[300px] mx-auto text-center" style={{ color: tcs }}>
                 {user.bio}
               </p>
             )}
 
-            {/* Links */}
-            <div
-              className={`mt-4 space-y-2 ${
-                c.linkAlignment === "left" ? "text-left" : "text-center"
-              }`}
-            >
-              {(links || []).slice(0, 5).map((link) => {
+            {/* ─── Divider ─── */}
+            <div className="w-12 h-0.5 mx-auto rounded-full" style={{ backgroundColor: `${c.accentColor}44` }} />
+
+            {/* ─── Links ─── */}
+            <div className={`flex flex-col gap-3 ${c.linkAlignment === "left" ? "items-start" : "items-center"}`}>
+              {(links || []).slice(0, 5).map((link, idx) => {
                 const { className, style } = getButtonClasses(
                   c.buttonStyle,
                   c.buttonWidth,
@@ -185,13 +214,16 @@ export default function LivePreview({ customization, user, links }) {
                   c.buttonTextColor
                 );
                 return (
-                  <a
+                  <motion.a
                     key={link._id}
                     href={link.url}
                     target="_blank"
                     rel="noreferrer"
                     className={className}
                     style={style}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.05, duration: 0.3 }}
                   >
                     <div className={`flex items-center gap-3 ${c.linkAlignment === "left" ? "" : "justify-center"}`}>
                       {c.showIcons && (
@@ -199,37 +231,36 @@ export default function LivePreview({ customization, user, links }) {
                       )}
                       <span>{link.title}</span>
                     </div>
-                  </a>
+                  </motion.a>
                 );
               })}
               {(!links || links.length === 0) && (
-                <div className="py-4 text-xs" style={{ color: `${tcs}88` }}>No links yet</div>
+                <div className="py-5 text-sm text-center" style={{ color: `${tcs}88` }}>
+                  No links yet
+                </div>
               )}
             </div>
 
-            {/* QR Code */}
-            {c.showQr && (
-              <div
-                className={`mt-4 ${
-                  c.qrPosition === "floating"
-                    ? "absolute bottom-3 right-3"
-                    : ""
-                }`}
-              >
-                <div className="inline-flex flex-col items-center bg-white/80 rounded-lg p-2">
-                  <p className="text-[10px] mb-2 uppercase tracking-wider" style={{ color: tcs }}>Scan to share</p>
+            {/* ─── QR + Footer (wrapped so gap-5 separates only when QR is visible) ─── */}
+            <div className="flex flex-col gap-5">
+              {c.showQr && (
+                <div className="inline-flex flex-col items-center mx-auto bg-white/90 backdrop-blur-sm rounded-xl p-3 shadow-lg">
+                  <p className="text-[10px] mb-2 uppercase tracking-widest font-medium" style={{ color: tcs }}>
+                    Scan to share
+                  </p>
                   <QRCodeCanvas
                     value={`${window.location.origin}/${user?.username || "username"}`}
-                    size={48}
+                    size={56}
                   />
                 </div>
-              </div>
-            )}
+              )}
+              <p className="text-[10px] tracking-wider uppercase text-center" style={{ color: `${tcs}66` }}>
+                Powered by LinkIn
+              </p>
+            </div>
           </div>
-        </div>
-
-        <p className="mt-4 text-[10px] text-white/40">Powered by LinkIn</p>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 }

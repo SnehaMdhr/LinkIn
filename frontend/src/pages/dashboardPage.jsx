@@ -17,7 +17,7 @@ import LinkCard from "../components/linkCard";
 import QrCard from "../components/qrCard";
 import SearchBar from "../components/searchBar";
 import Skeleton from "../components/Skeleton";
-import logo from "../assets/logo.png";
+import logo from "../assets/logo_only.png";
 
 function DashboardPage() {
   const { user, loading: authLoading, logout } = useContext(AuthContext);
@@ -97,8 +97,12 @@ function DashboardPage() {
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <nav className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <a href="/dashboard" className="flex items-center">
+          <a href="/dashboard" className="flex items-center gap-2.5">
             <img src={logo} alt="LinkIn" className="h-10 w-auto object-contain" />
+            <span className="text-xl font-bold tracking-tight">
+              <span className="text-black dark:text-white">Link</span>
+              <span className="text-[#AFF33E]">In</span>
+            </span>
           </a>
           <div className="flex items-center gap-3">
             <ThemeDropdown />

@@ -1,4 +1,4 @@
-import logo from "../../assets/logo.png";
+import logo from "../../assets/logo_only.png";
 
 function GithubIcon({ className }) {
   return (
@@ -13,8 +13,12 @@ function Footer() {
   return (
     <footer className="border-t border-border bg-muted/20">
       <div className="max-w-7xl mx-auto px-4 py-6 flex items-center justify-between">
-        <div className="flex items-center">
-          <img src={logo} alt="LinkIn" className="h-8 w-auto object-contain" />
+        <div className="flex items-center gap-2">
+          <img src={logo} alt="LinkIn" className="h-9 w-auto object-contain" />
+          <span className="text-lg font-bold tracking-tight">
+            <span className="text-black dark:text-white">Link</span>
+            <span className="text-[#AFF33E]">In</span>
+          </span>
         </div>
 
         <div className="flex items-center space-x-4">
