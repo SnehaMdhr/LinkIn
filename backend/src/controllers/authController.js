@@ -8,6 +8,8 @@ import { OAuth2Client } from "google-auth-library";
 import User from "../models/user.js";
 import { validatePassword } from "../utils/validatePassword.js";
 import { sendEmail, buildOtpEmail } from "../utils/email.js";
+import { auditService } from "../services/audit.service.js";
+import { auditContextFromReq, auditContextForUser } from "../middlewares/auditContext.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -55,6 +57,15 @@ export const registerUser = async (req, res, next) => {
       passwordHistory: [hashedPassword],
     });
 
+    // Fire-and-forget audit log (no await in hot path)
+    auditService.log("register", {
+      ...auditContextFromReq(req),
+      userId: user._id.toString(),
+      actorEmail: user.email,
+      actorName: user.name,
+      metadata: { username: user.username },
+    });
+
     res.status(201).json({
       message: "User registered successfully",
       user: {
@@ -92,6 +103,13 @@ export const loginUser = async (req, res, next) => {
 
     // Check if account is temporarily locked
     if (user.lockUntil && user.lockUntil > Date.now()) {
+      // Fire-and-forget audit log for locked account attempt
+      auditService.log("login_locked", {
+        ...auditContextFromReq(req),
+        actorEmail: trimmedEmail,
+        metadata: { reason: "account_locked" },
+      });
+
       const msRemaining = user.lockUntil - Date.now();
       const minutes = Math.ceil(msRemaining / 60000);
       return res.status(429).json({
@@ -113,6 +131,19 @@ export const loginUser = async (req, res, next) => {
       if (user.loginAttempts >= 15) {
         user.lockUntil = Date.now() + 15 * 60 * 1000;
         user.loginAttempts = 0;
+        // Fire-and-forget audit log for account lockout
+        auditService.log("login_account_locked", {
+          ...auditContextFromReq(req),
+          actorEmail: trimmedEmail,
+          metadata: { reason: "max_attempts_exceeded", attempts: user.loginAttempts },
+        });
+      } else {
+        // Fire-and-forget audit log for failed login
+        auditService.log("login_failed", {
+          ...auditContextFromReq(req),
+          actorEmail: trimmedEmail,
+          metadata: { reason: "invalid_credentials", attempt: user.loginAttempts },
+        });
       }
       await user.save();
       return res.status(400).json({ message: "Invalid email or password" });
@@ -129,8 +160,16 @@ export const loginUser = async (req, res, next) => {
       return res.status(403).json({ message: "This account has been suspended" });
     }
 
-    // If MFA is enabled, return pending MFA status (don't issue JWT yet)
     if (user.mfaEnabled) {
+      // Fire-and-forget audit log
+      auditService.log("mfa_challenge_issued", {
+        ...auditContextFromReq(req),
+        userId: user._id.toString(),
+        actorEmail: user.email,
+        actorName: user.name,
+        metadata: { provider: "totp", reason: "login_mfa_required" },
+      });
+
       return res.status(200).json({
         message: "MFA verification required",
         pendingMfa: true,
@@ -150,7 +189,7 @@ export const loginUser = async (req, res, next) => {
     }
 
     const token = jwt.sign(
-      { userId: user._id, email: user.email, role: user.role, tokenVersion: user.tokenVersion },
+      { userId: user._id, email: user.email, role: user.role, tokenVersion: user.tokenVersion, name: user.name },
       process.env.JWT_SECRET,
       { expiresIn: "15d" }
     );
@@ -162,6 +201,15 @@ export const loginUser = async (req, res, next) => {
       sameSite: "lax",
       path: "/",
       maxAge: 15 * 24 * 60 * 60 * 1000,
+    });
+
+    // Fire-and-forget audit log
+    auditService.log("login_success", {
+      ...auditContextFromReq(req),
+      userId: user._id.toString(),
+      actorEmail: user.email,
+      actorName: user.name,
+      metadata: { provider: "email" },
     });
 
     res.status(200).json({
@@ -210,6 +258,13 @@ export const forgotPassword = async (req, res, next) => {
 
     const user = await User.findOne({ email: email.trim() });
     if (!user) {
+      // Fire-and-forget audit log (email not found, but we don't reveal that)
+      auditService.log("forgot_password_requested", {
+        ...auditContextFromReq(req),
+        actorEmail: email.trim(),
+        metadata: { userFound: false },
+      });
+
       // Always return the same message to avoid leaking whether the email exists
       return res.status(200).json({ message: "If that email is registered, you will receive an OTP." });
     }
@@ -221,6 +276,13 @@ export const forgotPassword = async (req, res, next) => {
     user.resetPasswordToken = otp;
     user.resetPasswordExpire = Date.now() + 600000; // 10 minutes
     await user.save();
+
+    // Fire-and-forget audit log
+    auditService.log("forgot_password_requested", {
+      ...auditContextFromReq(req),
+      actorEmail: email.trim(),
+      metadata: { userFound: true },
+    });
 
     // Send the email with the OTP
     const emailHtml = buildOtpEmail(otp, user.name);
@@ -327,6 +389,15 @@ export const googleSignIn = async (req, res, next) => {
 
     // If MFA is enabled, require MFA verification even for Google sign-in
     if (user.mfaEnabled) {
+      // Fire-and-forget audit log for MFA challenge after Google auth
+      auditService.log("mfa_challenge_issued", {
+        ...auditContextFromReq(req),
+        userId: user._id.toString(),
+        actorEmail: user.email,
+        actorName: user.name,
+        metadata: { provider: "totp", reason: "google_oauth_mfa_required" },
+      });
+
       return res.status(200).json({
         message: "MFA verification required",
         pendingMfa: true,
@@ -346,7 +417,7 @@ export const googleSignIn = async (req, res, next) => {
     }
 
     const token = jwt.sign(
-      { userId: user._id, email: user.email, role: user.role, tokenVersion: user.tokenVersion },
+      { userId: user._id, email: user.email, role: user.role, tokenVersion: user.tokenVersion, name: user.name },
       process.env.JWT_SECRET,
       { expiresIn: "15d" }
     );
@@ -357,6 +428,15 @@ export const googleSignIn = async (req, res, next) => {
       sameSite: "lax",
       path: "/",
       maxAge: 15 * 24 * 60 * 60 * 1000,
+    });
+
+    // Fire-and-forget audit log
+    auditService.log("google_oauth_success", {
+      ...auditContextFromReq(req),
+      userId: user._id.toString(),
+      actorEmail: user.email,
+      actorName: user.name,
+      metadata: { provider: "google", isNewUser: !user.googleId },
     });
 
     res.status(200).json({
@@ -405,6 +485,13 @@ export const verifyOtpAndResetPassword = async (req, res, next) => {
     });
 
     if (!user) {
+      // Fire-and-forget audit log for failed reset
+      auditService.log("password_reset_failed", {
+        ...auditContextFromReq(req),
+        actorEmail: email.trim(),
+        metadata: { reason: "invalid_or_expired_otp" },
+      });
+
       return res.status(400).json({ message: "Invalid or expired OTP. Please request a new one." });
     }
 
@@ -427,6 +514,15 @@ export const verifyOtpAndResetPassword = async (req, res, next) => {
     user.resetPasswordToken = null;
     user.resetPasswordExpire = null;
     await user.save();
+
+    // Fire-and-forget audit log
+    auditService.log("password_reset_success", {
+      ...auditContextFromReq(req),
+      userId: user._id.toString(),
+      actorEmail: user.email,
+      actorName: user.name,
+      metadata: { method: "otp" },
+    });
 
     res.status(200).json({ message: "Password reset successful. You can now login." });
   } catch (error) {
@@ -477,6 +573,15 @@ export const changePassword = async (req, res, next) => {
     user.passwordHistory = [...(user.passwordHistory || []), hashedPassword].slice(-5);
     user.tokenVersion += 1;
     await user.save();
+
+    // Fire-and-forget audit log
+    auditService.log("password_changed", {
+      ...auditContextFromReq(req),
+      userId: user._id.toString(),
+      actorEmail: user.email,
+      actorName: user.name,
+      metadata: { method: "current_password" },
+    });
 
     res.cookie("token", "", {
       httpOnly: true,

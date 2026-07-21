@@ -8,6 +8,7 @@ import { Button } from "../components/ui/button";
 import ThemeDropdown from "../components/ThemeDropdown";
 import ProfileEditModal from "../components/ProfileEditModal";
 import AddLinkModal from "../components/AddLinkModal";
+import ActivityLogDialog from "../components/ActivityLogDialog";
 import EditLinkModal from "../components/EditLinkModal";
 import ConfirmDialog from "../components/ConfirmDialog";
 import ProfileCard from "../components/profileCard";
@@ -31,6 +32,7 @@ function DashboardPage() {
   const [addLinkOpen, setAddLinkOpen] = useState(false);
   const [editLinkId, setEditLinkId] = useState(null);
   const [logoutConfirm, setLogoutConfirm] = useState(false);
+  const [activityLogOpen, setActivityLogOpen] = useState(false);
 
   const filteredLinks = useMemo(() => {
     if (!search.trim()) return links;
@@ -105,6 +107,9 @@ function DashboardPage() {
             </Button>
             <Button variant="outline" size="sm" onClick={() => navigate("/customize-profile")}>
               Customize Profile
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setActivityLogOpen(true)}>
+              Activity Log
             </Button>
             <Button variant="ghost" size="sm" onClick={() => setLogoutConfirm(true)} className="text-destructive hover:text-destructive">
               Logout
@@ -211,6 +216,7 @@ function DashboardPage() {
       </div>
 
       <ProfileEditModal key={user?.id || "guest"} open={profileOpen} onOpenChange={setProfileOpen} />
+      <ActivityLogDialog open={activityLogOpen} onOpenChange={setActivityLogOpen} />
       <AddLinkModal open={addLinkOpen} onOpenChange={setAddLinkOpen} onLinkAdded={fetchLinks} />
       <EditLinkModal
         open={editLinkId !== null}

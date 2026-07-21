@@ -5,6 +5,7 @@ const verifyToken = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    console.error("[verifyToken] No Bearer token in Authorization header");
     return res.status(401).json({ message: "Access denied. No token provided." });
   }
 
@@ -14,13 +15,19 @@ const verifyToken = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     const user = await User.findById(decoded.userId).select("tokenVersion").lean();
-    if (!user || user.tokenVersion !== decoded.tokenVersion) {
+    if (!user) {
+      return res.status(401).json({ message: "Session expired. Please log in again." });
+    }
+    // Handle legacy users whose DB documents don't have tokenVersion
+    const dbTokenVersion = user.tokenVersion ?? 0;
+    if (dbTokenVersion !== decoded.tokenVersion) {
       return res.status(401).json({ message: "Session expired. Please log in again." });
     }
 
     req.user = decoded;
     next();
   } catch (error) {
+    console.error("[verifyToken] JWT verification FAILED:", error.message);
     return res.status(401).json({ message: "Invalid or expired token." });
   }
 };

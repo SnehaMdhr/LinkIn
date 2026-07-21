@@ -38,7 +38,7 @@ function App() {
       {/* Public profile (e.g. linkin.com/sneha) */}
       <Route path="/:username" element={<PublicProfilePage />} />
 
-      {/* Admin routes (no RBAC yet — role check only, added in Step 12) */}
+      {/* Admin routes */}
       <Route path="/admin" element={<AdminDashboardPage />} />
 
       {/* 404 fallback */}

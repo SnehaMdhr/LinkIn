@@ -14,6 +14,8 @@ import adminRoutes from "./routes/adminRoutes.js";
 import analyticsRoutes from "./routes/analyticsRoutes.js";
 import { generateCsrfToken, doubleCsrfProtection } from "./middleware/csrf.js";
 import mfaRoutes from "./routes/mfaRoutes.js";
+import { correlationIdMiddleware } from "./middlewares/correlationId.js";
+import auditRoutes from "./routes/audit.routes.js";
 dotenv.config();
 
 // Connect to MongoDB
@@ -57,6 +59,9 @@ app.get("/api/csrf-token", (req, res) => {
   res.json({ csrfToken: generateCsrfToken(req, res) });
 });
 
+// ─── Correlation ID (stamped on every request for audit trail) ────
+app.use(correlationIdMiddleware);
+
 // Public tracking endpoints + auth + MFA routes (called before user has CSRF token)
 // Auth routes already have rate limiting + captcha verification
 // MFA verify-login is public (needed during login step 2 before user is authenticated)
@@ -72,6 +77,9 @@ app.use("/api/profile", profileRoutes);
 app.use("/api/links", linkRoutes);
 app.use("/api/user", publicRoutes);
 app.use("/api/admin", adminRoutes);
+
+// Audit log routes (RBAC-scoped: user activity + admin audit logs)
+app.use("/api", auditRoutes);
 
 app.use(errorHandler);
 

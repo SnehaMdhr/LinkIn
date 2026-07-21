@@ -1,5 +1,7 @@
 import xss from "xss";
 import User from "../models/user.js";
+import { auditService } from "../services/audit.service.js";
+import { auditContextForUser } from "../middlewares/auditContext.js";
 
 // @desc  Get logged-in user's profile
 // @route GET /api/profile
@@ -166,6 +168,14 @@ export const updateProfile = async (req, res, next) => {
     if (!updatedUser) {
       return res.status(404).json({ message: "User not found" });
     }
+
+    // Fire-and-forget audit log
+    auditService.log("profile_updated", {
+      ...auditContextForUser(req),
+      userId: userId.toString(),
+      actorEmail: req.user.email,
+      metadata: { updatedFields: Object.keys(updateData) },
+    });
 
     res.status(200).json({ message: "Profile updated", user: updatedUser });
   } catch (error) {

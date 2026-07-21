@@ -11,6 +11,7 @@ import UserTable from "../../components/userTable";
 import CreateUserModal from "../../components/CreateUserModal";
 import UserDetailModal from "../../components/UserDetailModal";
 import ConfirmDialog from "../../components/ConfirmDialog";
+import AdminAuditLogDialog from "../../components/AdminAuditLogDialog";
 import logo from "../../assets/logo.png";
 
 function AdminDashboardPage() {
@@ -26,6 +27,7 @@ function AdminDashboardPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [detailUserId, setDetailUserId] = useState(null);
   const [logoutConfirm, setLogoutConfirm] = useState(false);
+  const [auditLogOpen, setAuditLogOpen] = useState(false);
   const toast = useToast();
   const LIMIT = 10;
 
@@ -109,7 +111,12 @@ function AdminDashboardPage() {
             onChange={handleSearchChange}
             placeholder="Search by name, email, or username..."
           />
-          <Button onClick={() => setCreateOpen(true)}>+ Add User</Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => setAuditLogOpen(true)}>
+              Audit Logs
+            </Button>
+            <Button onClick={() => setCreateOpen(true)}>+ Add User</Button>
+          </div>
         </div>
 
         {loading ? (
@@ -150,6 +157,8 @@ function AdminDashboardPage() {
           </>
         )}
       </div>
+
+      <AdminAuditLogDialog open={auditLogOpen} onOpenChange={setAuditLogOpen} />
 
       <CreateUserModal
         open={createOpen}

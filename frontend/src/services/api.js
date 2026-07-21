@@ -16,7 +16,6 @@ export const fetchCsrfToken = async () => {
     csrfToken = res.data.csrfToken;
     return csrfToken;
   }).catch(() => {
-    // If CSRF endpoint fails, proceed without token (dev mode)
     console.warn("Failed to fetch CSRF token");
   });
   return csrfPromise;
@@ -27,13 +26,27 @@ api.interceptors.request.use((config) => {
   const stored = localStorage.getItem("linkin_user") || sessionStorage.getItem("linkin_user");
   if (stored) {
     try {
-      const { token } = JSON.parse(stored);
-      if (token) {
+      const parsed = JSON.parse(stored);
+      const token = parsed.token;
+      if (token && typeof token === "string" && token.length > 10) {
         config.headers.Authorization = `Bearer ${token}`;
+      } else {
+        console.warn("[API] ⚠️ Token invalid in linkin_user:", { type: typeof token, preview: token?.slice(0, 10), fields: Object.keys(parsed) });
       }
-    } catch {
-      // Corrupted storage data, ignore
+    } catch (e) {
+      console.warn("[API] ⚠️ Corrupted linkin_user in storage, clearing...");
+      localStorage.removeItem("linkin_user");
+      sessionStorage.removeItem("linkin_user");
     }
+  }
+
+  // Log admin route requests for debugging
+  if (config.url?.includes("/admin") || config.url?.includes("/me/activity")) {
+    const authHeader = config.headers.Authorization;
+    console.log("[API] ➡️", config.method?.toUpperCase(), config.url, {
+      hasAuth: !!authHeader,
+      tokenPreview: authHeader?.slice(0, 30) + "...",
+    });
   }
 
   // Attach CSRF token for state-changing methods (POST, PUT, DELETE, PATCH)
@@ -43,5 +56,17 @@ api.interceptors.request.use((config) => {
 
   return config;
 });
+
+// Response interceptor: log 401 details without redirecting
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      console.error("[API] 🔴 401 on", error.config?.url);
+      console.error("[API] 🔴 Auth header was:", error.config?.headers?.Authorization?.slice(0, 40) + "...");
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default api;

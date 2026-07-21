@@ -1,5 +1,7 @@
 import xss from "xss";
 import Link from "../models/link.js";
+import { auditService } from "../services/audit.service.js";
+import { auditContextForUser } from "../middlewares/auditContext.js";
 
 // @desc  Get all links for the logged-in user
 // @route GET /api/links
@@ -26,6 +28,14 @@ export const createLink = async (req, res, next) => {
     }
 
     const link = await Link.create({ userId, platform, title: xss(title), url, position, isHidden, isPinned, category });
+
+    // Fire-and-forget audit log
+    auditService.log("profile_updated", {
+      ...auditContextForUser(req),
+      userId: userId.toString(),
+      metadata: { action: "link_created", linkId: link._id.toString(), platform, title },
+    });
+
     res.status(201).json({ message: "Link created", link });
   } catch (error) {
     next(error);
@@ -63,6 +73,13 @@ export const updateLink = async (req, res, next) => {
       return res.status(404).json({ message: "Link not found" });
     }
 
+    // Fire-and-forget audit log
+    auditService.log("profile_updated", {
+      ...auditContextForUser(req),
+      userId: userId.toString(),
+      metadata: { action: "link_updated", linkId: id, updatedFields: Object.keys(updateFields) },
+    });
+
     res.status(200).json({ message: "Link updated", link: updatedLink });
   } catch (error) {
     next(error);
@@ -81,6 +98,13 @@ export const deleteLink = async (req, res, next) => {
     if (!deletedLink) {
       return res.status(404).json({ message: "Link not found" });
     }
+
+    // Fire-and-forget audit log
+    auditService.log("profile_updated", {
+      ...auditContextForUser(req),
+      userId: userId.toString(),
+      metadata: { action: "link_deleted", linkId: id, platform: deletedLink.platform },
+    });
 
     res.status(200).json({ message: "Link deleted" });
   } catch (error) {

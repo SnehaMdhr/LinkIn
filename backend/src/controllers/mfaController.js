@@ -3,6 +3,8 @@ import qrcode from "qrcode";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import User from "../models/user.js";
+import { auditService } from "../services/audit.service.js";
+import { auditContextFromReq, auditContextForUser } from "../middlewares/auditContext.js";
 
 // @desc  Setup MFA — generate TOTP secret and QR code
 // @route POST /api/auth/mfa/setup
@@ -59,11 +61,26 @@ export const verifyMfaSetup = async (req, res, next) => {
     });
 
     if (!verified) {
+      // Fire-and-forget audit log for failed MFA setup verification
+      auditService.log("mfa_verify_failed", {
+        ...auditContextForUser(req),
+        metadata: { reason: "invalid_code", context: "setup" },
+      });
+
       return res.status(400).json({ message: "Invalid verification code. Please try again." });
     }
 
     user.mfaEnabled = true;
     await user.save();
+
+    // Fire-and-forget audit log
+    auditService.log("mfa_enabled", {
+      ...auditContextForUser(req),
+      userId: user._id.toString(),
+      actorEmail: user.email,
+      actorName: user.name,
+      metadata: { method: "totp" },
+    });
 
     res.status(200).json({ message: "MFA has been enabled successfully" });
   } catch (error) {
@@ -101,6 +118,15 @@ export const disableMfa = async (req, res, next) => {
     user.mfaEnabled = false;
     await user.save();
 
+    // Fire-and-forget audit log
+    auditService.log("mfa_disabled", {
+      ...auditContextForUser(req),
+      userId: user._id.toString(),
+      actorEmail: user.email,
+      actorName: user.name,
+      metadata: { method: token ? "totp_code" : "password" },
+    });
+
     res.status(200).json({ message: "MFA has been disabled" });
   } catch (error) {
     next(error);
@@ -131,12 +157,28 @@ export const verifyMfaLogin = async (req, res, next) => {
     });
 
     if (!verified) {
+      // Fire-and-forget audit log for failed MFA login verification
+      auditService.log("mfa_verify_failed", {
+        ...auditContextFromReq(req),
+        actorEmail: user.email,
+        metadata: { reason: "invalid_code", context: "login" },
+      });
+
       return res.status(400).json({ message: "Invalid verification code" });
     }
 
+    // Fire-and-forget audit log for successful MFA login
+    auditService.log("mfa_verify_success", {
+      ...auditContextFromReq(req),
+      userId: user._id.toString(),
+      actorEmail: user.email,
+      actorName: user.name,
+      metadata: { provider: "totp", context: "login" },
+    });
+
     // Generate JWT after successful MFA verification
     const accessToken = jwt.sign(
-      { userId: user._id, email: user.email, role: user.role, tokenVersion: user.tokenVersion },
+      { userId: user._id, email: user.email, role: user.role, tokenVersion: user.tokenVersion, name: user.name },
       process.env.JWT_SECRET,
       { expiresIn: "15d" }
     );

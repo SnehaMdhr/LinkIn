@@ -1,6 +1,8 @@
 import bcrypt from "bcrypt";
 import User from "../models/user.js";
 import Link from "../models/link.js";
+import { auditService } from "../services/audit.service.js";
+import { auditContextForUser } from "../middlewares/auditContext.js";
 
 const SALT_ROUNDS = 10;
 
@@ -34,6 +36,18 @@ export const createUser = async (req, res, next) => {
     });
 
     const { password: _, ...userWithoutPassword } = newUser.toObject();
+
+    // Fire-and-forget audit log
+    auditService.log("admin_user_role_changed", {
+      ...auditContextForUser(req),
+      metadata: {
+        targetUserId: newUser._id.toString(),
+        targetEmail: newUser.email,
+        action: "user_created",
+        role: newUser.role,
+      },
+    });
+
     res.status(201).json({ message: "User created", user: userWithoutPassword });
   } catch (error) {
     next(error);
@@ -124,6 +138,21 @@ export const updateUser = async (req, res, next) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    // Fire-and-forget audit log for role changes
+    if (updateFields.role) {
+      // Fetch the old user to compare roles (need old document)
+      const oldUser = await User.findById(id).select("role email name").lean();
+      auditService.log("admin_user_role_changed", {
+        ...auditContextForUser(req),
+        metadata: {
+          targetUserId: id,
+          targetEmail: updatedUser.email,
+          oldRole: oldUser?.role,
+          newRole: updateFields.role,
+        },
+      });
+    }
+
     res.status(200).json({ message: "User updated", user: updatedUser });
   } catch (error) {
     next(error);
@@ -142,6 +171,16 @@ export const deleteUser = async (req, res, next) => {
     }
 
     await Link.deleteMany({ userId: id });
+
+    // Fire-and-forget audit log
+    auditService.log("admin_user_deleted", {
+      ...auditContextForUser(req),
+      metadata: {
+        targetUserId: id,
+        targetEmail: deletedUser.email,
+        targetName: deletedUser.name,
+      },
+    });
 
     res.status(200).json({ message: "User and their links deleted" });
   } catch (error) {
