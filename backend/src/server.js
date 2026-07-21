@@ -1,3 +1,8 @@
+import https from "https";
+import http from "http";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 import crypto from "crypto";
 import express from "express";
 import cors from "cors";
@@ -6,6 +11,9 @@ import connectDB from "./config/db.js";
 import cookieParser from "cookie-parser";
 import morgan from "morgan";
 import errorHandler from "./middleware/errorHandler.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 import authRoutes from "./routes/authRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
 import linkRoutes from "./routes/linkRoutes.js";
@@ -25,7 +33,12 @@ const app = express();
 app.use(morgan("combined"));
 app.use(cors({
   origin: (origin, callback) => {
-    const allowed = ["http://localhost:3000", "http://localhost:3001"];
+    const allowed = [
+      "http://localhost:3000",
+      "https://localhost:3000",
+      "http://localhost:3001",
+      "https://localhost:3001",
+    ];
     if (!origin || allowed.includes(origin)) {
       callback(null, true);
     } else {
@@ -85,6 +98,35 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+// ─── TLS options (graceful fallback if certs missing) ──────────────
+const keyPath = path.join(__dirname, "..", "localhost+2-key.pem");
+const certPath = path.join(__dirname, "..", "localhost+2.pem");
+const hasCerts = fs.existsSync(keyPath) && fs.existsSync(certPath);
+
+if (hasCerts) {
+  const tlsOptions = {
+    key: fs.readFileSync(keyPath),
+    cert: fs.readFileSync(certPath),
+  };
+
+  // HTTP → HTTPS redirect
+  const httpApp = express();
+  httpApp.use((req, res) => {
+    res.redirect(301, `https://localhost:${PORT}${req.url}`);
+  });
+
+  https.createServer(tlsOptions, app).listen(PORT, () => {
+    console.log(`Server running on https://localhost:${PORT}`);
+  });
+
+  const HTTP_PORT = process.env.HTTP_PORT || 5001;
+  http.createServer(httpApp).listen(HTTP_PORT, () => {
+    console.log(`HTTP redirect server running on http://localhost:${HTTP_PORT}`);
+  });
+} else {
+  // Fallback to HTTP
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`[SSL] Certs not found. To enable HTTPS, run mkcert in backend/certs/`);
+  });
+}
