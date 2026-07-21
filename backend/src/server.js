@@ -16,7 +16,11 @@ import { generateCsrfToken, doubleCsrfProtection } from "./middleware/csrf.js";
 import mfaRoutes from "./routes/mfaRoutes.js";
 import { correlationIdMiddleware } from "./middlewares/correlationId.js";
 import auditRoutes from "./routes/audit.routes.js";
+import path from "path";
+import { fileURLToPath } from "url";
 dotenv.config();
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Connect to MongoDB
 connectDB();
@@ -36,6 +40,9 @@ app.use(cors({
 }));
 app.use(express.json({ limit: "5mb" }));
 app.use(cookieParser());
+
+// Serve uploaded images so profileImage paths like /uploads/xxx.png resolve
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Test route to confirm server is alive
 app.get("/", (req, res) => {
