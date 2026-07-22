@@ -150,9 +150,17 @@ export const updateProfile = async (req, res, next) => {
       }
     }
 
-    // Handle file upload separately
+    // Handle file upload separately from multer
     if (req.file) {
+      // Multer already validated the file type + size — just store the path
       updateData.profileImage = `/uploads/${req.file.filename}`;
+    } else if (req.body.profileImage && req.body.profileImage.startsWith("data:")) {
+      // If profileImage is a base64 data URL but multer didn't process a file,
+      // it means the frontend sent it in JSON body (old code) — reject non-image types
+      const mimeType = req.body.profileImage.split(";")[0].split(":")[1];
+      if (!["image/jpeg", "image/png", "image/webp"].includes(mimeType)) {
+        return res.status(400).json({ message: "Only JPEG, PNG, and WebP images are allowed." });
+      }
     }
 
     if (Object.keys(updateData).length === 0) {

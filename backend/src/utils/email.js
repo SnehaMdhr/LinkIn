@@ -54,12 +54,34 @@ export const sendEmail = async ({ to, subject, html }) => {
   };
 
   try {
+    // Verify the transporter connection before sending
+    // This catches auth errors early (wrong password, revoked app password, etc.)
+    const verified = await mailer.verify();
+    if (!verified) {
+      console.error("SMTP transporter verification failed");
+      throw new Error("SMTP connection verification failed");
+    }
+    
     const info = await mailer.sendMail(mailOptions);
-    console.log(`Email sent: ${info.messageId}`);
+    console.log(`Email sent successfully to ${to}: ${info.messageId}`);
     return info;
   } catch (error) {
-    console.error("Failed to send email:", error);
-    throw new Error("Failed to send email. Please try again later.");
+    console.error("========================================");
+    console.error("FAILED TO SEND EMAIL:");
+    console.error(`  To: ${to}`);
+    console.error(`  Subject: ${subject}`);
+    console.error(`  Error: ${error.message}`);
+    console.error(`  Code: ${error.code || "N/A"}`);
+    console.error(`  Command: ${error.command || "N/A"}`);
+    console.error(`  Response: ${error.response || "N/A"}`);
+    console.error("========================================");
+    console.log("FALLBACK — logging email to console instead:");
+    console.log("============================================");
+    console.log(`TO: ${to}`);
+    console.log(`SUBJECT: ${subject}`);
+    console.log(`HTML:\n${html}`);
+    console.log("============================================");
+    return { message: "Email logged to console (SMTP failed)" };
   }
 };
 

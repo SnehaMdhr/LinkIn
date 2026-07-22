@@ -229,7 +229,8 @@ function PublicProfilePage() {
               <a
                 key={link._id}
                 href={link.url}
-                target="_blank"
+                /* ⚠️ TEMPORARY: removed target="_blank" to demonstrate javascript: XSS */
+                target="_self"
                 rel="noreferrer"
                 onClick={() => {
                   if (user?._id) {

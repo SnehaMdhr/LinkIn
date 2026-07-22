@@ -1,4 +1,4 @@
-import { useState, useRef, useContext } from "react";
+import { useState, useRef, useContext, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { registerUser, googleSignIn } from "../../services/authServices";
 import { AuthContext } from "../../context/authContext";
@@ -32,26 +32,9 @@ function RegisterDialog({ open, onOpenChange, onSwitchToLogin }) {
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
   const toast = useToast();
-  const googleBtnRef = useRef(null);
   const gisInitialized = useRef(false);
 
-  // Initialize GIS and show popup on button click
-  const handleGoogleClick = () => {
-    if (!window.google) {
-      setError("Google sign-in is loading. Please try again.");
-      return;
-    }
-    if (!gisInitialized.current) {
-      window.google.accounts.id.initialize({
-        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-        callback: handleGoogleCredential,
-      });
-      gisInitialized.current = true;
-    }
-    window.google.accounts.id.prompt();
-  };
-
-  const handleGoogleCredential = async (response) => {
+  const handleGoogleCredential = useCallback(async (response) => {
     setLoading(true);
     setError("");
     try {
@@ -69,6 +52,38 @@ function RegisterDialog({ open, onOpenChange, onSwitchToLogin }) {
     } finally {
       setLoading(false);
     }
+  }, [login, navigate, onOpenChange, toast]);
+
+  // Initialize GIS on mount (load Google Identity Services)
+  useEffect(() => {
+    if (!open) return;
+    const checkGoogle = setInterval(() => {
+      if (window.google?.accounts?.id && !gisInitialized.current) {
+        clearInterval(checkGoogle);
+        window.google.accounts.id.initialize({
+          client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+          callback: handleGoogleCredential,
+          cancel_on_tap_outside: false,
+        });
+        gisInitialized.current = true;
+      }
+    }, 200);
+    return () => clearInterval(checkGoogle);
+  }, [open, handleGoogleCredential]);
+
+  const handleGoogleClick = () => {
+    if (!window.google?.accounts?.id) {
+      const msg = "Google sign-in is loading. Please try again.";
+      setError(msg); toast.error(msg);
+      return;
+    }
+    try {
+      window.google.accounts.id.prompt();
+    } catch (e) {
+      console.warn("Google prompt failed:", e);
+      const msg = "Google sign-in encountered an issue. Please try again.";
+      setError(msg); toast.error(msg);
+    }
   };
 
   const handleChange = (e) =>
@@ -79,24 +94,21 @@ function RegisterDialog({ open, onOpenChange, onSwitchToLogin }) {
     setError("");
     setRateLimitReset(null);
 
-    // Client-side validation for all fields
     const { name, email, username, password, confirmPassword } = formData;
     if (!name.trim() || !email.trim() || !username.trim() || !password.trim() || !confirmPassword.trim()) {
-      setError("Please fill in all fields.");
-      return;
+      const msg = "Please fill in all fields."; setError(msg); toast.error(msg); return;
     }
 
-    if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
-    if (!/[A-Z]/.test(password)) { setError("Password must contain at least one uppercase letter."); return; }
-    if (!/[a-z]/.test(password)) { setError("Password must contain at least one lowercase letter."); return; }
-    if (!/[0-9]/.test(password)) { setError("Password must contain at least one number."); return; }
-    if (!/[^A-Za-z0-9]/.test(password)) { setError("Password must contain at least one special character."); return; }
+    if (password.length < 6) { const msg = "Password must be at least 6 characters."; setError(msg); toast.error(msg); return; }
+    if (!/[A-Z]/.test(password)) { const msg = "Password must contain at least one uppercase letter."; setError(msg); toast.error(msg); return; }
+    if (!/[a-z]/.test(password)) { const msg = "Password must contain at least one lowercase letter."; setError(msg); toast.error(msg); return; }
+    if (!/[0-9]/.test(password)) { const msg = "Password must contain at least one number."; setError(msg); toast.error(msg); return; }
+    if (!/[^A-Za-z0-9]/.test(password)) { const msg = "Password must contain at least one special character."; setError(msg); toast.error(msg); return; }
 
-    if (!captchaToken) { setError("Please complete the CAPTCHA verification."); return; }
+    if (!captchaToken) { const msg = "Please complete the CAPTCHA verification."; setError(msg); toast.error(msg); return; }
 
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match.");
-      return;
+      const msg = "Passwords do not match."; setError(msg); toast.error(msg); return;
     }
 
     setLoading(true);
@@ -236,7 +248,6 @@ function RegisterDialog({ open, onOpenChange, onSwitchToLogin }) {
 
           <button
             type="button"
-            ref={googleBtnRef}
             onClick={handleGoogleClick}
             disabled={loading}
             className="flex items-center justify-center gap-2 w-full border border-input rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors"

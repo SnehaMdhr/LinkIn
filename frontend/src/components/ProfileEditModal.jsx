@@ -26,6 +26,7 @@ export default function ProfileEditModal({ open, onOpenChange }) {
     profileImage: user?.profileImage || "",
   });
   const [preview, setPreview] = useState(user?.profileImage || "");
+  const [selectedFile, setSelectedFile] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [mfaSetupOpen, setMfaSetupOpen] = useState(false);
@@ -36,16 +37,43 @@ export default function ProfileEditModal({ open, onOpenChange }) {
   };
 
   const handleFileSelect = (e) => {
+    console.log("🔥 ProfileEditModal handleFileSelect FIRED");
     const file = e.target.files?.[0];
+    console.log("🔥 Selected file:", file?.name, "type:", file?.type, "size:", file?.size);
     if (!file) return;
 
-    // Show a local preview immediately
+    // Validate file type on client side before anything else
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    console.log("🔥 Checking file.type against:", allowedTypes, "→ match:", allowedTypes.includes(file.type));
+    if (!allowedTypes.includes(file.type)) {
+      const errMsg = "Only JPEG, PNG, and WebP images are allowed.";
+      console.log("🔥 REJECTED - ", errMsg);
+      setError(errMsg);
+      toast.error(errMsg);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    // Validate file size on client side (2MB max)
+    if (file.size > 2 * 1024 * 1024) {
+      const errMsg = "File too large. Max size is 2MB.";
+      console.log("🔥 REJECTED - ", errMsg);
+      setError(errMsg);
+      toast.error(errMsg);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    console.log("🔥 FILE ACCEPTED - setting selectedFile");
+    // Store the actual File object for multipart upload
+    setSelectedFile(file);
+
+    // Show a local preview using base64
     const reader = new FileReader();
     reader.onload = (ev) => {
       const dataUrl = ev.target?.result;
       if (typeof dataUrl === "string") {
         setPreview(dataUrl);
-        setFormData((prev) => ({ ...prev, profileImage: dataUrl }));
       }
     };
     reader.readAsDataURL(file);
@@ -60,7 +88,24 @@ export default function ProfileEditModal({ open, onOpenChange }) {
     setLoading(true);
 
     try {
-      const response = await api.put("/profile", formData);
+      let response;
+
+      if (selectedFile) {
+        // Use FormData for file upload → triggers multer fileFilter on backend
+        const form = new FormData();
+        form.append("profileImage", selectedFile);
+        form.append("name", formData.name.trim());
+        form.append("bio", formData.bio);
+
+        // Axios auto-detects FormData and sets multipart/form-data + boundary
+        response = await api.put("/profile", form);
+      } else {
+        // No file selected → send regular JSON (only name + bio)
+        const payload = { name: formData.name.trim(), bio: formData.bio };
+        if (formData.profileImage === "") payload.profileImage = "";
+        response = await api.put("/profile", payload);
+      }
+
       login({ ...user, ...response.data.user });
       toast.success("Profile updated successfully!");
       onOpenChange(false);
@@ -124,7 +169,7 @@ export default function ProfileEditModal({ open, onOpenChange }) {
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/*"
+                  accept=".jpg,.jpeg,.png,.webp"
                   onChange={handleFileSelect}
                   className="hidden"
                 />
@@ -144,6 +189,7 @@ export default function ProfileEditModal({ open, onOpenChange }) {
                     className="text-destructive ml-2"
                     onClick={() => {
                       setPreview("");
+                      setSelectedFile(null);
                       setFormData((prev) => ({ ...prev, profileImage: "" }));
                       if (fileInputRef.current) fileInputRef.current.value = "";
                     }}

@@ -64,6 +64,23 @@ export default function EditUserModal({ open, onOpenChange, userId, onUserUpdate
   const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Client-side file type validation
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      setError("Only JPEG, PNG, and WebP images are allowed.");
+      toast.error("Only JPEG, PNG, and WebP images are allowed.");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+    // Client-side file size validation (2MB max)
+    if (file.size > 2 * 1024 * 1024) {
+      setError("File too large. Max size is 2MB.");
+      toast.error("File too large. Max size is 2MB.");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (ev) => {
       const dataUrl = ev.target?.result;
@@ -130,7 +147,7 @@ export default function EditUserModal({ open, onOpenChange, userId, onUserUpdate
                   )}
                 </div>
                 <div className="flex-1">
-                  <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
+                  <input ref={fileInputRef} type="file" accept=".jpg,.jpeg,.png,.webp" onChange={handleFileSelect} className="hidden" />
                   <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
                     Choose Image
                   </Button>

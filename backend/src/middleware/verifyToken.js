@@ -4,12 +4,18 @@ import User from "../models/user.js";
 const verifyToken = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    console.error("[verifyToken] No Bearer token in Authorization header");
-    return res.status(401).json({ message: "Access denied. No token provided." });
+  // Try Authorization header first, then fall back to the httpOnly cookie
+  let token;
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    token = authHeader.split(" ")[1];
+  } else if (req.cookies?.token) {
+    token = req.cookies.token;
   }
 
-  const token = authHeader.split(" ")[1];
+  if (!token) {
+    console.error("[verifyToken] No Bearer token in Authorization header or cookie");
+    return res.status(401).json({ message: "Access denied. No token provided." });
+  }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);

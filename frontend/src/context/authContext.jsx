@@ -12,22 +12,37 @@ export function AuthProvider({ children }) {
     // Fetch CSRF token on app start
     fetchCsrfToken();
 
-    // Try to restore user from storage (no token stored — token is in httpOnly cookie)
-    const storedUser = localStorage.getItem("linkin_user") || sessionStorage.getItem("linkin_user");
-    if (storedUser) {
+    (async () => {
+      // Try to verify the session using the httpOnly cookie (sent automatically)
       try {
-        const u = JSON.parse(storedUser);
-        setUser(u);
-        applyTheme(u?.theme || "light");
+        const res = await api.get("/profile");
+        // Cookie-based auth succeeded — restore user from response
+        const u = res.data;
+        // Also restore cached user from storage for theme/display (without token)
+        const cached = localStorage.getItem("linkin_user") || sessionStorage.getItem("linkin_user");
+        const cachedData = cached ? JSON.parse(cached) : {};
+        // Merge: API response has the freshest data, cached has theme/customization
+        const merged = { ...cachedData, ...u };
+        setUser(merged);
+        applyTheme(merged?.theme || u?.theme || "light");
       } catch {
-        // Corrupted data, clear it
+        // No valid session cookie — user is not logged in
         localStorage.removeItem("linkin_user");
         sessionStorage.removeItem("linkin_user");
+        applyTheme("light");
       }
-    } else {
+      setLoading(false);
+    })();
+
+    // Listen for forced-logout events (fired by API interceptor on 401)
+    const onForcedLogout = () => {
+      setUser(null);
+      localStorage.removeItem("linkin_user");
+      sessionStorage.removeItem("linkin_user");
       applyTheme("light");
-    }
-    setLoading(false);
+    };
+    window.addEventListener("auth:logout", onForcedLogout);
+    return () => window.removeEventListener("auth:logout", onForcedLogout);
   }, []);
 
   /* Re-sync theme whenever user changes */
@@ -36,14 +51,13 @@ export function AuthProvider({ children }) {
   }, [user]);
 
   const login = (userData, token, rememberMe = true) => {
-    // Preserve existing token if a new one isn't provided
-    const resolvedToken = token !== undefined ? token : userData?.token;
-    const userWithToken = { ...userData, token: resolvedToken };
-    setUser(userWithToken);
+    // Strip token before storing — JWT lives ONLY in the httpOnly cookie now
+    const { token: _, ...userWithoutToken } = userData;
+    setUser(userWithoutToken);
     if (rememberMe) {
-      localStorage.setItem("linkin_user", JSON.stringify(userWithToken));
+      localStorage.setItem("linkin_user", JSON.stringify(userWithoutToken));
     } else {
-      sessionStorage.setItem("linkin_user", JSON.stringify(userWithToken));
+      sessionStorage.setItem("linkin_user", JSON.stringify(userWithoutToken));
     }
     applyTheme(userData?.theme || "light");
   };

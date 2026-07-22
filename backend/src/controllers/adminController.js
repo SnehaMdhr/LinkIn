@@ -24,6 +24,15 @@ export const createUser = async (req, res, next) => {
 
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
+    // Server-side validation: reject non-image base64 data URLs
+    let validatedProfileImage = profileImage || "";
+    if (validatedProfileImage && validatedProfileImage.startsWith("data:")) {
+      const mimeType = validatedProfileImage.split(";")[0].split(":")[1];
+      if (!["image/jpeg", "image/png", "image/webp"].includes(mimeType)) {
+        return res.status(400).json({ message: "Only JPEG, PNG, and WebP images are allowed." });
+      }
+    }
+
     const newUser = await User.create({
       name,
       email,
@@ -32,7 +41,7 @@ export const createUser = async (req, res, next) => {
       passwordHistory: [hashedPassword],
       role: role || "user",
       status: status || "active",
-      profileImage: profileImage || "",
+      profileImage: validatedProfileImage,
     });
 
     const { password: _, ...userWithoutPassword } = newUser.toObject();
@@ -117,6 +126,14 @@ export const updateUser = async (req, res, next) => {
 
     // Mass assignment protection: only allow specific fields
     const ALLOWED_FIELDS = ["status", "role", "name", "email", "username", "bio", "profileImage"];
+
+    // Server-side validation: reject non-image base64 data URLs
+    if (req.body.profileImage && req.body.profileImage.startsWith("data:")) {
+      const mimeType = req.body.profileImage.split(";")[0].split(":")[1];
+      if (!["image/jpeg", "image/png", "image/webp"].includes(mimeType)) {
+        return res.status(400).json({ message: "Only JPEG, PNG, and WebP images are allowed." });
+      }
+    }
 
     const updateFields = {};
     for (const field of ALLOWED_FIELDS) {

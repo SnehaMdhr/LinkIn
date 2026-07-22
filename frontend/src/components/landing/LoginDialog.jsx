@@ -1,4 +1,4 @@
-import { useState, useContext, useRef } from "react";
+import { useState, useContext, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { loginUser, googleSignIn } from "../../services/authServices";
 import { AuthContext } from "../../context/authContext";
@@ -25,35 +25,17 @@ function LoginDialog({ open, onOpenChange, onSwitchToRegister, onSwitchToForgotP
   const [rateLimitReset, setRateLimitReset] = useState(null);
   const [loading, setLoading] = useState(false);
   const [captchaToken, setCaptchaToken] = useState(null);
-  const [mfaPending, setMfaPending] = useState(null); // { userId, userName, rememberMe }
+  const [mfaPending, setMfaPending] = useState(null);
   const { login } = useContext(AuthContext);
   const toast = useToast();
   const navigate = useNavigate();
-  const googleBtnRef = useRef(null);
   const gisInitialized = useRef(false);
 
-  // Initialize GIS and show popup on button click
-  const handleGoogleClick = () => {
-    if (!window.google) {
-      setError("Google sign-in is loading. Please try again.");
-      return;
-    }
-    if (!gisInitialized.current) {
-      window.google.accounts.id.initialize({
-        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-        callback: handleGoogleCredential,
-      });
-      gisInitialized.current = true;
-    }
-    window.google.accounts.id.prompt();
-  };
-
-  const handleGoogleCredential = async (response) => {
+  const handleGoogleCredential = useCallback(async (response) => {
     setLoading(true);
     setError("");
     try {
       const res = await googleSignIn(response.credential);
-      // If MFA is enabled, show MFA dialog instead of logging in directly
       if (res.pendingMfa) {
         setMfaPending({ userId: res.userId, userName: res.user?.name, rememberMe: true });
         setLoading(false);
@@ -72,6 +54,38 @@ function LoginDialog({ open, onOpenChange, onSwitchToRegister, onSwitchToForgotP
     } finally {
       setLoading(false);
     }
+  }, [login, navigate, onOpenChange, toast]);
+
+  // Initialize GIS on mount (load Google Identity Services)
+  useEffect(() => {
+    if (!open) return;
+    const checkGoogle = setInterval(() => {
+      if (window.google?.accounts?.id && !gisInitialized.current) {
+        clearInterval(checkGoogle);
+        window.google.accounts.id.initialize({
+          client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+          callback: handleGoogleCredential,
+          cancel_on_tap_outside: false,
+        });
+        gisInitialized.current = true;
+      }
+    }, 200);
+    return () => clearInterval(checkGoogle);
+  }, [open, handleGoogleCredential]);
+
+  const handleGoogleClick = () => {
+    if (!window.google?.accounts?.id) {
+      const msg = "Google sign-in is loading. Please try again.";
+      setError(msg); toast.error(msg);
+      return;
+    }
+    try {
+      window.google.accounts.id.prompt();
+    } catch (e) {
+      console.warn("Google prompt failed:", e);
+      const msg = "Google sign-in encountered an issue. Please try again.";
+      setError(msg); toast.error(msg);
+    }
   };
 
   const handleChange = (e) =>
@@ -82,14 +96,13 @@ function LoginDialog({ open, onOpenChange, onSwitchToRegister, onSwitchToForgotP
     setError("");
     setRateLimitReset(null);
 
-    if (!formData.email.trim()) { setError("Email is required."); return; }
-    if (!formData.password) { setError("Password is required."); return; }
-    if (!captchaToken) { setError("Please complete the CAPTCHA verification."); return; }
+    if (!formData.email.trim()) { const msg = "Email is required."; setError(msg); toast.error(msg); return; }
+    if (!formData.password) { const msg = "Password is required."; setError(msg); toast.error(msg); return; }
+    if (!captchaToken) { const msg = "Please complete the CAPTCHA verification."; setError(msg); toast.error(msg); return; }
 
     setLoading(true);
     try {
       const res = await loginUser({ ...formData, captchaToken });
-      // If MFA is enabled, show MFA dialog instead of logging in directly
       if (res.pendingMfa) {
         setMfaPending({ userId: res.userId, userName: res.user?.name, rememberMe });
         setLoading(false);
@@ -177,7 +190,8 @@ function LoginDialog({ open, onOpenChange, onSwitchToRegister, onSwitchToForgotP
               onChange={handleChange}
               placeholder="••••••••"
             />
-          </div>                          <div className="flex items-center justify-end">
+          </div>
+          <div className="flex items-center justify-end">
             <button
               type="button"
               onClick={onSwitchToForgotPassword}
@@ -214,7 +228,6 @@ function LoginDialog({ open, onOpenChange, onSwitchToRegister, onSwitchToForgotP
 
           <button
             type="button"
-            ref={googleBtnRef}
             onClick={handleGoogleClick}
             disabled={loading}
             className="flex items-center justify-center gap-2 w-full border border-input rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
@@ -241,7 +254,6 @@ function LoginDialog({ open, onOpenChange, onSwitchToRegister, onSwitchToForgotP
         </p>
       </DialogContent>
 
-      {/* MFA verification dialog (shown after login when MFA is enabled) */}
       <MfaVerifyDialog
         open={!!mfaPending}
         onOpenChange={handleMfaClose}

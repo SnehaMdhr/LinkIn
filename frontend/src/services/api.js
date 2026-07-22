@@ -22,31 +22,14 @@ export const fetchCsrfToken = async () => {
 };
 
 api.interceptors.request.use((config) => {
-  // Attach JWT Bearer token
-  const stored = localStorage.getItem("linkin_user") || sessionStorage.getItem("linkin_user");
-  if (stored) {
-    try {
-      const parsed = JSON.parse(stored);
-      const token = parsed.token;
-      if (token && typeof token === "string" && token.length > 10) {
-        config.headers.Authorization = `Bearer ${token}`;
-      } else {
-        console.warn("[API] ⚠️ Token invalid in linkin_user:", { type: typeof token, preview: token?.slice(0, 10), fields: Object.keys(parsed) });
-      }
-    } catch (e) {
-      console.warn("[API] ⚠️ Corrupted linkin_user in storage, clearing...");
-      localStorage.removeItem("linkin_user");
-      sessionStorage.removeItem("linkin_user");
-    }
-  }
+  // JWT is now sent via httpOnly cookie automatically (withCredentials: true).
+  // We no longer read from localStorage — the cookie is the single source of truth.
+  // The server's verifyToken middleware falls back to req.cookies.token if
+  // no Authorization header is present, so removing this doesn't break auth.
 
   // Log admin route requests for debugging
   if (config.url?.includes("/admin") || config.url?.includes("/me/activity")) {
-    const authHeader = config.headers.Authorization;
-    console.log("[API] ➡️", config.method?.toUpperCase(), config.url, {
-      hasAuth: !!authHeader,
-      tokenPreview: authHeader?.slice(0, 30) + "...",
-    });
+    console.log("[API] ➡️", config.method?.toUpperCase(), config.url);
   }
 
   // Attach CSRF token for state-changing methods (POST, PUT, DELETE, PATCH)
@@ -57,13 +40,17 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor: log 401 details without redirecting
+// Response interceptor: handle 401 — clear stale auth and trigger logout
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      console.error("[API] 🔴 401 on", error.config?.url);
-      console.error("[API] 🔴 Auth header was:", error.config?.headers?.Authorization?.slice(0, 40) + "...");
+      // Clear stored user data
+      localStorage.removeItem("linkin_user");
+      sessionStorage.removeItem("linkin_user");
+
+      // Dispatch custom event so AuthProvider can react immediately
+      window.dispatchEvent(new CustomEvent("auth:logout"));
     }
     return Promise.reject(error);
   }

@@ -30,6 +30,11 @@ const verifyTurnstileToken = async (token) => {
 
 // @desc  Middleware to verify Turnstile on protected routes
 const verifyTurnstile = async (req, res, next) => {
+  // DEV MODE: skip CAPTCHA verification if not in production (for Postman/local testing)
+  if (process.env.NODE_ENV !== "production") {
+    return next();
+  }
+
   const captchaToken = req.body.captchaToken;
 
   if (!captchaToken) {

@@ -22,7 +22,6 @@ function ProfilePage() {
   const [formData, setFormData] = useState({
     name: user?.name || "",
     bio: user?.bio || "",
-    profileImage: user?.profileImage || "",
     theme: user?.theme || "light",
   });
   const [error, setError] = useState("");
@@ -87,16 +86,6 @@ function ProfilePage() {
             <textarea name="bio" value={formData.bio} onChange={handleChange} rows="3"
               className="w-full border border-input rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring"
               placeholder="Tell people a bit about yourself..." />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-1">Profile Image URL</label>
-            <input type="text" name="profileImage" value={formData.profileImage} onChange={handleChange}
-              className="w-full border border-input rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder="https://example.com/your-photo.jpg" />
-            <p className="text-xs text-muted-foreground mt-1">
-              Basic implementation: paste an image URL (file upload comes later).
-            </p>
           </div>
 
           <div>

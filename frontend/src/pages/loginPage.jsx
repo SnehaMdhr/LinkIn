@@ -1,20 +1,77 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useRef, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { loginUser } from "../services/authServices";
+import { loginUser, googleSignIn } from "../services/authServices";
 import { AuthContext } from "../context/authContext";
 import { useToast } from "../context/toastContext";
 import { Button } from "../components/ui/button";
 import { PasswordInput } from "../components/ui/passwordInput";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card";
 import ThemeDropdown from "../components/ThemeDropdown";
+import TurnstileWidget from "../components/ui/TurnstileWidget";
 
 function LoginPage() {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState(null);
   const { login } = useContext(AuthContext);
   const toast = useToast();
   const navigate = useNavigate();
+  const gisInitialized = useRef(false);
+
+  const handleGoogleCredential = useCallback(async (response) => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await googleSignIn(response.credential);
+      if (res.pendingMfa) {
+        setLoading(false);
+        setError("MFA verification required. Please use the dialog.");
+        return;
+      }
+      const userData = res.user || res.data;
+      const token = res.token;
+      login(userData, token, true);
+      toast.success(`Welcome, ${userData.name}!`);
+      navigate(userData.role === "admin" ? "/admin" : "/dashboard");
+    } catch (err) {
+      const msg = err.response?.data?.message || "Google sign-in failed.";
+      setError(msg);
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  }, [login, navigate, toast]);
+
+  useEffect(() => {
+    const checkGoogle = setInterval(() => {
+      if (window.google?.accounts?.id && !gisInitialized.current) {
+        clearInterval(checkGoogle);
+        window.google.accounts.id.initialize({
+          client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+          callback: handleGoogleCredential,
+          cancel_on_tap_outside: false,
+        });
+        gisInitialized.current = true;
+      }
+    }, 200);
+    return () => clearInterval(checkGoogle);
+  }, [handleGoogleCredential]);
+
+  const handleGoogleClick = () => {
+    if (!window.google?.accounts?.id) {
+      const msg = "Google sign-in is loading. Please try again.";
+      setError(msg); toast.error(msg);
+      return;
+    }
+    try {
+      window.google.accounts.id.prompt();
+    } catch (e) {
+      console.warn("Google prompt failed:", e);
+      const msg = "Google sign-in encountered an issue. Please try again.";
+      setError(msg); toast.error(msg);
+    }
+  };
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
@@ -22,12 +79,13 @@ function LoginPage() {
     e.preventDefault();
     setError("");
 
-    if (!formData.email.trim()) { setError("Email is required."); return; }
-    if (!formData.password) { setError("Password is required."); return; }
+    if (!formData.email.trim()) { const msg = "Email is required."; setError(msg); toast.error(msg); return; }
+    if (!formData.password) { const msg = "Password is required."; setError(msg); toast.error(msg); return; }
+    if (!captchaToken) { const msg = "Please complete the CAPTCHA verification."; setError(msg); toast.error(msg); return; }
 
     setLoading(true);
     try {
-      const data = await loginUser(formData);
+      const data = await loginUser({ ...formData, captchaToken });
       login(data.user, data.token);
       toast.success(`Welcome back, ${data.user.name}!`);
       navigate(data.user.role === "admin" ? "/admin" : "/dashboard");
@@ -64,11 +122,37 @@ function LoginPage() {
               <label className="block text-sm font-medium text-foreground mb-1">Password</label>
               <PasswordInput name="password" value={formData.password} onChange={handleChange} placeholder="••••••••" />
             </div>
+            <TurnstileWidget onVerify={setCaptchaToken} />
             <Button type="submit" disabled={loading} className="w-full" size="lg">
               {loading ? "Logging in..." : "Login"}
             </Button>
           </form>
-          <p className="text-sm text-muted-foreground text-center mt-6">
+
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleGoogleClick}
+            disabled={loading}
+            className="flex items-center justify-center gap-2 w-full border border-input rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors mb-4"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 48 48">
+              <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z" />
+              <path fill="#FF3D00" d="m6.306 14.691 6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z" />
+              <path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0 1 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z" />
+              <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 0 1-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z" />
+            </svg>
+            Continue with Google
+          </button>
+
+          <p className="text-sm text-muted-foreground text-center">
             Don't have an account? <Link to="/register" className="text-primary font-medium">Register</Link>
           </p>
         </CardContent>
