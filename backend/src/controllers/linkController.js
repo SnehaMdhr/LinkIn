@@ -27,6 +27,10 @@ export const createLink = async (req, res, next) => {
       return res.status(400).json({ message: "platform, title, and url are required" });
     }
 
+    if (!/^https?:\/\//i.test(url)) {
+      return res.status(400).json({ message: "URL must start with http:// or https://" });
+    }
+
     const link = await Link.create({ userId, platform, title: xss(title), url, position, isHidden, isPinned, category });
 
     // Fire-and-forget audit log
@@ -60,6 +64,10 @@ export const updateLink = async (req, res, next) => {
 
     if (Object.keys(updateFields).length === 0) {
       return res.status(400).json({ message: "No valid fields provided to update" });
+    }
+
+    if (updateFields.url && !/^https?:\/\//i.test(updateFields.url)) {
+      return res.status(400).json({ message: "URL must start with http:// or https://" });
     }
 
     // IDOR check: only update if the link belongs to the authenticated user

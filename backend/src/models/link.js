@@ -18,6 +18,10 @@ const linkSchema = new mongoose.Schema(
     url: {
       type: String,
       required: true,
+      validate: {
+        validator: (v) => /^https?:\/\//i.test(v),
+        message: "URL must start with http:// or https://",
+      },
     },
     position: {
       type: Number,

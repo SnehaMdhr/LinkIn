@@ -129,7 +129,12 @@ export const updateUser = async (req, res, next) => {
       return res.status(400).json({ message: "No valid fields provided to update" });
     }
 
-    const updatedUser = await User.findByIdAndUpdate(id, updateFields, {
+    const updateOp = { $set: updateFields };
+    if (updateFields.role) {
+      updateOp.$inc = { tokenVersion: 1 };
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(id, updateOp, {
       new: true,
       runValidators: true,
     }).select("-password");
