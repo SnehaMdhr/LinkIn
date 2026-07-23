@@ -129,12 +129,25 @@ export const updateUser = async (req, res, next) => {
       return res.status(400).json({ message: "No valid fields provided to update" });
     }
 
-    const updateOp = { $set: updateFields };
-    if (updateFields.role) {
-      updateOp.$inc = { tokenVersion: 1 };
+    // Fetch the current user FIRST to get the old role for audit logging
+    const currentUser = await User.findById(id).select("role email name").lean();
+    if (!currentUser) {
+      return res.status(404).json({ message: "User not found" });
     }
 
-    const updatedUser = await User.findByIdAndUpdate(id, updateOp, {
+    const roleChanged = updateFields.role && updateFields.role !== currentUser.role;
+
+    const updateQuery = { $set: updateFields };
+
+    // Note: We do NOT increment tokenVersion on role change.
+    // Authorization is handled by verifyToken which checks the live DB role
+    // and overrides req.user.role accordingly. The same JWT token remains
+    // valid across role changes — the user just gains or loses access to
+    // admin routes based on their current DB role.
+    // tokenVersion is still incremented on password changes (authController)
+    // to force re-authentication after credential updates.
+
+    const updatedUser = await User.findByIdAndUpdate(id, updateQuery, {
       new: true,
       runValidators: true,
     }).select("-password");
@@ -144,15 +157,13 @@ export const updateUser = async (req, res, next) => {
     }
 
     // Fire-and-forget audit log for role changes
-    if (updateFields.role) {
-      // Fetch the old user to compare roles (need old document)
-      const oldUser = await User.findById(id).select("role email name").lean();
+    if (roleChanged) {
       auditService.log("admin_user_role_changed", {
         ...auditContextForUser(req),
         metadata: {
           targetUserId: id,
           targetEmail: updatedUser.email,
-          oldRole: oldUser?.role,
+          oldRole: currentUser.role,
           newRole: updateFields.role,
         },
       });
