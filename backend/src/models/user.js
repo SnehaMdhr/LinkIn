@@ -13,12 +13,16 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: true,
+      default: "", // Empty for OAuth users
     },
     username: {
       type: String,
       required: true,
       unique: true,
+    },
+    googleId: {
+      type: String,
+      default: null,
     },
     bio: {
       type: String,
@@ -47,6 +51,30 @@ const userSchema = new mongoose.Schema(
     resetPasswordExpire: {
       type: Date,
       default: null,
+    },
+    passwordHistory: {
+      type: [String],
+      default: [],
+    },
+    loginAttempts: {
+      type: Number,
+      default: 0,
+    },
+    lockUntil: {
+      type: Date,
+      default: null,
+    },
+    tokenVersion: {
+      type: Number,
+      default: 0,
+    },
+    totpSecret: {
+      type: String,
+      default: null,
+    },
+    mfaEnabled: {
+      type: Boolean,
+      default: false,
     },
     profileCustomization: {
       backgroundType: { type: String, default: "gradient" },

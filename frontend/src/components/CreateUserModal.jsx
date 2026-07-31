@@ -3,6 +3,7 @@ import { useToast } from "../context/toastContext";
 import { createUser } from "../services/adminServices";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
+import { PasswordInput } from "./ui/passwordInput";
 import { Label } from "./ui/label";
 import {
   Select,
@@ -50,6 +51,23 @@ export default function CreateUserModal({ open, onOpenChange, onUserCreated }) {
   const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Client-side file type validation
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      setError("Only JPEG, PNG, and WebP images are allowed.");
+      toast.error("Only JPEG, PNG, and WebP images are allowed.");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+    // Client-side file size validation (2MB max)
+    if (file.size > 2 * 1024 * 1024) {
+      setError("File too large. Max size is 2MB.");
+      toast.error("File too large. Max size is 2MB.");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (ev) => {
       const dataUrl = ev.target?.result;
@@ -64,6 +82,16 @@ export default function CreateUserModal({ open, onOpenChange, onUserCreated }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    if (!formData.name.trim()) { setError("Name is required."); return; }
+    if (!formData.email.trim()) { setError("Email is required."); return; }
+    if (!formData.username.trim()) { setError("Username is required."); return; }
+    if (formData.password.length < 6) { setError("Password must be at least 6 characters."); return; }
+    if (!/[A-Z]/.test(formData.password)) { setError("Password must contain at least one uppercase letter."); return; }
+    if (!/[a-z]/.test(formData.password)) { setError("Password must contain at least one lowercase letter."); return; }
+    if (!/[0-9]/.test(formData.password)) { setError("Password must contain at least one number."); return; }
+    if (!/[^A-Za-z0-9]/.test(formData.password)) { setError("Password must contain at least one special character."); return; }
+
     setLoading(true);
 
     try {
@@ -106,7 +134,7 @@ export default function CreateUserModal({ open, onOpenChange, onUserCreated }) {
                 )}
               </div>
               <div className="flex-1">
-                <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
+                <input ref={fileInputRef} type="file" accept=".jpg,.jpeg,.png,.webp" onChange={handleFileSelect} className="hidden" />
                 <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
                   Choose Image
                 </Button>
@@ -137,7 +165,7 @@ export default function CreateUserModal({ open, onOpenChange, onUserCreated }) {
 
           <div className="space-y-2">
             <Label htmlFor="create-password">Password</Label>
-            <Input id="create-password" name="password" type="password" value={formData.password} onChange={handleChange} placeholder="Password" required />
+            <PasswordInput id="create-password" name="password" value={formData.password} onChange={handleChange} placeholder="Password" required />
           </div>
 
           <div className="grid grid-cols-2 gap-4">

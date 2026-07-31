@@ -8,6 +8,7 @@ import { Button } from "../components/ui/button";
 import ThemeDropdown from "../components/ThemeDropdown";
 import ProfileEditModal from "../components/ProfileEditModal";
 import AddLinkModal from "../components/AddLinkModal";
+import ActivityLogDialog from "../components/ActivityLogDialog";
 import EditLinkModal from "../components/EditLinkModal";
 import ConfirmDialog from "../components/ConfirmDialog";
 import ProfileCard from "../components/profileCard";
@@ -16,10 +17,10 @@ import LinkCard from "../components/linkCard";
 import QrCard from "../components/qrCard";
 import SearchBar from "../components/searchBar";
 import Skeleton from "../components/Skeleton";
-import logo from "../assets/logo.png";
+import logo from "../assets/logo_only.png";
 
 function DashboardPage() {
-  const { user, logout } = useContext(AuthContext);
+  const { user, loading: authLoading, logout } = useContext(AuthContext);
   const navigate = useNavigate();
   const toast = useToast();
 
@@ -31,6 +32,7 @@ function DashboardPage() {
   const [addLinkOpen, setAddLinkOpen] = useState(false);
   const [editLinkId, setEditLinkId] = useState(null);
   const [logoutConfirm, setLogoutConfirm] = useState(false);
+  const [activityLogOpen, setActivityLogOpen] = useState(false);
 
   const filteredLinks = useMemo(() => {
     if (!search.trim()) return links;
@@ -44,18 +46,19 @@ function DashboardPage() {
   }, [links, search]);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!user) {
       navigate("/");
       return;
     }
     fetchLinks();
     fetchStats();
-  }, [user]);
+  }, [user, authLoading]);
 
   const fetchLinks = async () => {
     try {
       setLoading(true);
-      const data = await getLinks(user.id);
+      const data = await getLinks();
       setLinks(data);
     } catch (err) {
       toast.error("Failed to load links.");
@@ -88,14 +91,18 @@ function DashboardPage() {
     navigate("/");
   };
 
-  if (!user) return null; 
+  if (authLoading || !user) return null;
 
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <nav className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <a href="/dashboard" className="flex items-center">
+          <a href="/dashboard" className="flex items-center gap-2.5">
             <img src={logo} alt="LinkIn" className="h-10 w-auto object-contain" />
+            <span className="text-xl font-bold tracking-tight">
+              <span className="text-black dark:text-white">Link</span>
+              <span className="text-[#AFF33E]">In</span>
+            </span>
           </a>
           <div className="flex items-center gap-3">
             <ThemeDropdown />
@@ -104,6 +111,9 @@ function DashboardPage() {
             </Button>
             <Button variant="outline" size="sm" onClick={() => navigate("/customize-profile")}>
               Customize Profile
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setActivityLogOpen(true)}>
+              Activity Log
             </Button>
             <Button variant="ghost" size="sm" onClick={() => setLogoutConfirm(true)} className="text-destructive hover:text-destructive">
               Logout
@@ -210,6 +220,7 @@ function DashboardPage() {
       </div>
 
       <ProfileEditModal key={user?.id || "guest"} open={profileOpen} onOpenChange={setProfileOpen} />
+      <ActivityLogDialog open={activityLogOpen} onOpenChange={setActivityLogOpen} />
       <AddLinkModal open={addLinkOpen} onOpenChange={setAddLinkOpen} onLinkAdded={fetchLinks} />
       <EditLinkModal
         open={editLinkId !== null}

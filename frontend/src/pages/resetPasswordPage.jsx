@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { resetPassword } from "../services/authServices";
 import { useToast } from "../context/toastContext";
 import { Button } from "../components/ui/button";
+import { PasswordInput } from "../components/ui/passwordInput";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card";
 import ThemeDropdown from "../components/ThemeDropdown";
 
@@ -22,6 +23,12 @@ function ResetPasswordPage() {
     setError("");
     setSuccess("");
 
+    if (!password) { setError("Password is required."); return; }
+    if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
+    if (!/[A-Z]/.test(password)) { setError("Password must contain at least one uppercase letter."); return; }
+    if (!/[a-z]/.test(password)) { setError("Password must contain at least one lowercase letter."); return; }
+    if (!/[0-9]/.test(password)) { setError("Password must contain at least one number."); return; }
+    if (!/[^A-Za-z0-9]/.test(password)) { setError("Password must contain at least one special character."); return; }
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
       return;
@@ -61,15 +68,12 @@ function ResetPasswordPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">New Password</label>
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
-                className="w-full border border-input rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring"
-                placeholder="••••••••" />
+              <PasswordInput value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
+              <p className="text-xs text-muted-foreground mt-1">Min 6 chars, 1 uppercase, 1 lowercase, 1 number, 1 special character.</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">Confirm New Password</label>
-              <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full border border-input rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring"
-                placeholder="••••••••" />
+              <PasswordInput value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" />
             </div>
             <Button type="submit" disabled={loading || success} className="w-full" size="lg">
               {loading ? "Resetting..." : "Reset Password"}

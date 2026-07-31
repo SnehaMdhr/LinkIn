@@ -216,16 +216,6 @@ function PublicProfilePage() {
             </p>
           )}
 
-          {/* Badge */}
-          <div className="flex items-center justify-center gap-2 mt-4">
-            <span
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium"
-              style={{ backgroundColor: `${c.accentColor}22`, color: c.accentColor }}
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
-              Available
-            </span>
-          </div>
         </div>
 
         {/* ---- LINKS SECTION ---- */}
@@ -239,7 +229,8 @@ function PublicProfilePage() {
               <a
                 key={link._id}
                 href={link.url}
-                target="_blank"
+                /* ⚠️ TEMPORARY: removed target="_blank" to demonstrate javascript: XSS */
+                target="_self"
                 rel="noreferrer"
                 onClick={() => {
                   if (user?._id) {

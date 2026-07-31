@@ -11,7 +11,8 @@ import UserTable from "../../components/userTable";
 import CreateUserModal from "../../components/CreateUserModal";
 import UserDetailModal from "../../components/UserDetailModal";
 import ConfirmDialog from "../../components/ConfirmDialog";
-import logo from "../../assets/logo.png";
+import AdminAuditLogDialog from "../../components/AdminAuditLogDialog";
+import logo from "../../assets/logo_only.png";
 
 function AdminDashboardPage() {
   const { user, logout } = useContext(AuthContext);
@@ -26,6 +27,7 @@ function AdminDashboardPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [detailUserId, setDetailUserId] = useState(null);
   const [logoutConfirm, setLogoutConfirm] = useState(false);
+  const [auditLogOpen, setAuditLogOpen] = useState(false);
   const toast = useToast();
   const LIMIT = 10;
 
@@ -82,8 +84,12 @@ function AdminDashboardPage() {
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <nav className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <a href="/dashboard" className="flex items-center">
+          <a href="/dashboard" className="flex items-center gap-2.5">
             <img src={logo} alt="LinkIn" className="h-10 w-auto object-contain" />
+            <span className="text-xl font-bold tracking-tight">
+              <span className="text-black dark:text-white">Link</span>
+              <span className="text-[#AFF33E]">In</span>
+            </span>
           </a>
           <div className="flex items-center gap-3">
             <ThemeDropdown />
@@ -109,7 +115,12 @@ function AdminDashboardPage() {
             onChange={handleSearchChange}
             placeholder="Search by name, email, or username..."
           />
-          <Button onClick={() => setCreateOpen(true)}>+ Add User</Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => setAuditLogOpen(true)}>
+              Audit Logs
+            </Button>
+            <Button onClick={() => setCreateOpen(true)}>+ Add User</Button>
+          </div>
         </div>
 
         {loading ? (
@@ -150,6 +161,8 @@ function AdminDashboardPage() {
           </>
         )}
       </div>
+
+      <AdminAuditLogDialog open={auditLogOpen} onOpenChange={setAuditLogOpen} />
 
       <CreateUserModal
         open={createOpen}

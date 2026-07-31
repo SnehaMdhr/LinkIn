@@ -10,10 +10,21 @@ export default function AppearanceSection({ customization, onChange }) {
   const handleImageUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      alert("Image must be under 5 MB.");
+
+    // Client-side file type validation
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      alert("Only JPEG, PNG, and WebP images are allowed.");
+      if (e.target) e.target.value = "";
       return;
     }
+    // Client-side file size validation (5MB max for background images)
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image must be under 5 MB.");
+      if (e.target) e.target.value = "";
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (ev) => onChange("backgroundImage", ev.target.result);
     reader.readAsDataURL(file);

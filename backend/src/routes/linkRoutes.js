@@ -1,13 +1,14 @@
 import express from "express";
 import { getLinks, createLink, updateLink, deleteLink, getLinkById, reorderLinks } from "../controllers/linkController.js";
+import verifyToken from "../middleware/verifyToken.js";
 
 const router = express.Router();
 
-router.get("/", getLinks);
-router.post("/", createLink);
-router.put("/reorder", reorderLinks);
-router.put("/:id", updateLink);
-router.get("/single/:id", getLinkById); 
-router.delete("/:id", deleteLink);
+router.get("/", verifyToken, getLinks);
+router.post("/", verifyToken, createLink);
+router.put("/reorder", verifyToken, reorderLinks);
+router.put("/:id", verifyToken, updateLink);
+router.get("/single/:id", verifyToken, getLinkById);
+router.delete("/:id", verifyToken, deleteLink);
 
 export default router;

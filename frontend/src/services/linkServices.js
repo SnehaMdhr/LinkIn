@@ -1,8 +1,8 @@
 import api from "./api";
 
-// @desc  Get all links for a user
-export const getLinks = async (userId) => {
-  const response = await api.get(`/links?userId=${userId}`);
+// @desc  Get all links for the logged-in user
+export const getLinks = async () => {
+  const response = await api.get("/links");
   return response.data;
 };
 
