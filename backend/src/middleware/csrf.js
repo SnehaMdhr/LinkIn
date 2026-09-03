@@ -1,11 +1,17 @@
 import crypto from "crypto";
 import { doubleCsrf } from "csrf-csrf";
 
+// FIX: no hardcoded fallback secret — CSRF_SECRET must be configured
+const csrfSecret = process.env.CSRF_SECRET;
+if (!csrfSecret) {
+  throw new Error("CSRF_SECRET environment variable must be set");
+}
+
 const {
   generateCsrfToken,
   doubleCsrfProtection,
 } = doubleCsrf({
-  getSecret: () => process.env.CSRF_SECRET || "csrf-secret-key-change-in-production",
+  getSecret: () => csrfSecret,
   getSessionIdentifier: (req) => {
     // Use JWT userId for authenticated users
     if (req.user?.userId) return req.user.userId.toString();
@@ -22,7 +28,7 @@ const {
   cookieName: "csrf-token",
   cookieOptions: {
     httpOnly: true,
-    sameSite: "strict",
+    sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
   },

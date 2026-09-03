@@ -6,6 +6,8 @@ import connectDB from "./config/db.js";
 import cookieParser from "cookie-parser";
 import morgan from "morgan";
 import errorHandler from "./middleware/errorHandler.js";
+import publicAuthRoutes from "./routes/publicAuthRoutes.js";
+import publicMfaRoutes from "./routes/publicMfaRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
 import linkRoutes from "./routes/linkRoutes.js";
@@ -19,6 +21,12 @@ import auditRoutes from "./routes/audit.routes.js";
 import path from "path";
 import { fileURLToPath } from "url";
 dotenv.config();
+
+// FIX: require a configured CSRF secret — no hardcoded fallback
+if (!process.env.CSRF_SECRET) {
+  console.error("FATAL: CSRF_SECRET environment variable is not set");
+  process.exit(1);
+}
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -57,7 +65,7 @@ app.get("/api/csrf-token", (req, res) => {
     req.sessionId = sessionId;
     res.cookie("session-id", sessionId, {
       httpOnly: true,
-      sameSite: "strict",
+      sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
       path: "/",
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
@@ -69,17 +77,17 @@ app.get("/api/csrf-token", (req, res) => {
 // ─── Correlation ID (stamped on every request for audit trail) ────
 app.use(correlationIdMiddleware);
 
-// Public tracking endpoints + auth + MFA routes (called before user has CSRF token)
-// Auth routes already have rate limiting + captcha verification
-// MFA verify-login is public (needed during login step 2 before user is authenticated)
-app.use("/api/auth", authRoutes);
-app.use("/api/auth/mfa", mfaRoutes);
+// Public routes — no CSRF needed (login, register, forgot-password, MFA verify-login, etc.)
+app.use("/api/auth", publicAuthRoutes);
+app.use("/api/auth/mfa", publicMfaRoutes);
 app.use("/api/analytics", analyticsRoutes);
 
-// Apply CSRF protection to all other state-changing API routes
+// Apply CSRF protection to all state-changing API routes
 app.use("/api", doubleCsrfProtection);
 
 // Protected routes (require CSRF token for POST/PUT/DELETE)
+app.use("/api/auth", authRoutes);
+app.use("/api/auth/mfa", mfaRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/links", linkRoutes);
 app.use("/api/user", publicRoutes);
