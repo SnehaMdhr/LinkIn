@@ -1,7 +1,7 @@
+import "dotenv/config";
 import crypto from "crypto";
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import cookieParser from "cookie-parser";
 import morgan from "morgan";
@@ -20,8 +20,6 @@ import { correlationIdMiddleware } from "./middlewares/correlationId.js";
 import auditRoutes from "./routes/audit.routes.js";
 import path from "path";
 import { fileURLToPath } from "url";
-dotenv.config();
-
 // FIX: require a configured CSRF secret — no hardcoded fallback
 if (!process.env.CSRF_SECRET) {
   console.error("FATAL: CSRF_SECRET environment variable is not set");

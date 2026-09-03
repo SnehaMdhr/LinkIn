@@ -7,8 +7,12 @@ function ProfileCard({ user }) {
     <Card>
       <CardContent className="p-6">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center text-2xl font-bold text-primary">
-            {user.name?.charAt(0).toUpperCase() || "U"}
+          <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center text-2xl font-bold text-primary overflow-hidden">
+            {user.profileImage ? (
+              <img src={user.profileImage} alt={user.name} className="w-full h-full object-cover" />
+            ) : (
+              user.name?.charAt(0).toUpperCase() || "U"
+            )}
           </div>
           <div>
             <h2 className="text-xl font-bold text-foreground">{user.name}</h2>

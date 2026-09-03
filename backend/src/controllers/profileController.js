@@ -153,7 +153,7 @@ export const updateProfile = async (req, res, next) => {
     // Handle file upload separately from multer
     if (req.file) {
       // Multer already validated the file type + size — just store the path
-      updateData.profileImage = `/uploads/${req.file.filename}`;
+      updateData.profileImage = req.file.path;
     } else if (req.body.profileImage && req.body.profileImage.startsWith("data:")) {
       // If profileImage is a base64 data URL but multer didn't process a file,
       // it means the frontend sent it in JSON body (old code) — reject non-image types
