@@ -37,8 +37,8 @@ app.use(cors({
       process.env.VERCEL_URL,
       "http://localhost:3000",
       "http://localhost:3001",
-    ].filter(Boolean);
-    if (!origin || allowed.includes(origin)) {
+    ].filter(Boolean).map((url) => url.replace(/\/+$/, ""));
+    if (!origin || allowed.includes(origin.replace(/\/+$/, ""))) {
       callback(null, true);
     } else {
       callback(new Error("Not allowed by CORS"));
