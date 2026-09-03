@@ -1,7 +1,7 @@
 import express from "express";
 import { getProfile, updateProfile, getCustomization, updateCustomization, resetCustomization } from "../controllers/profileController.js";
 import verifyToken from "../middleware/verifyToken.js";
-import upload from "../config/upload.js";
+import upload from "../config/cloudinary.js";
 
 const router = express.Router();
 

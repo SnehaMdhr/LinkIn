@@ -1,7 +1,6 @@
 import speakeasy from "speakeasy";
 import qrcode from "qrcode";
 import jwt from "jsonwebtoken";
-import bcrypt from "bcrypt";
 import User from "../models/user.js";
 import { auditService } from "../services/audit.service.js";
 import { auditContextFromReq, auditContextForUser } from "../middlewares/auditContext.js";
@@ -93,26 +92,23 @@ export const verifyMfaSetup = async (req, res, next) => {
 export const disableMfa = async (req, res, next) => {
   try {
     const userId = req.user.userId;
-    const { token, password } = req.body;
+    const { token } = req.body;
 
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    // Require either TOTP code or password to disable
-    if (token) {
-      const verified = speakeasy.totp.verify({
-        secret: user.totpSecret,
-        encoding: "base32",
-        token,
-        window: 1,
-      });
-      if (!verified) return res.status(400).json({ message: "Invalid verification code" });
-    } else if (password) {
-      const isMatch = await bcrypt.compare(password, user.password);
-      if (!isMatch) return res.status(400).json({ message: "Invalid password" });
-    } else {
-      return res.status(400).json({ message: "Verification code or password required to disable MFA" });
+    // FIX: TOTP code is the sole verification method to disable MFA
+    if (!token) {
+      return res.status(400).json({ message: "TOTP code is required to disable MFA" });
     }
+
+    const verified = speakeasy.totp.verify({
+      secret: user.totpSecret,
+      encoding: "base32",
+      token,
+      window: 1,
+    });
+    if (!verified) return res.status(400).json({ message: "Invalid verification code" });
 
     user.totpSecret = null;
     user.mfaEnabled = false;
@@ -124,7 +120,7 @@ export const disableMfa = async (req, res, next) => {
       userId: user._id.toString(),
       actorEmail: user.email,
       actorName: user.name,
-      metadata: { method: token ? "totp_code" : "password" },
+      metadata: { method: "totp_code" },
     });
 
     res.status(200).json({ message: "MFA has been disabled" });
