@@ -9,33 +9,45 @@ const getCsrfSecret = () => {
   return secret;
 };
 
-const {
-  generateCsrfToken,
-  doubleCsrfProtection,
-} = doubleCsrf({
-  getSecret: getCsrfSecret,
-  getSessionIdentifier: (req) => {
-    // Use JWT userId for authenticated users
-    if (req.user?.userId) return req.user.userId.toString();
-    // Use session ID already set in this request (by token endpoint)
-    if (req.sessionId) return req.sessionId;
-    // Read existing session cookie
-    if (!req.cookies?.["session-id"]) {
-      req.sessionId = crypto.randomUUID();
-    } else {
-      req.sessionId = req.cookies["session-id"];
-    }
-    return req.sessionId;
-  },
-  cookieName: "csrf-token",
-  cookieOptions: {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-  },
-  size: 64,
-  ignoredMethods: ["GET", "HEAD", "OPTIONS"],
-});
+let _generateCsrfToken;
+let _doubleCsrfProtection;
+
+function initCsrf() {
+  if (_generateCsrfToken) return;
+  const result = doubleCsrf({
+    getSecret: getCsrfSecret,
+    getSessionIdentifier: (req) => {
+      if (req.user?.userId) return req.user.userId.toString();
+      if (req.sessionId) return req.sessionId;
+      if (!req.cookies?.["session-id"]) {
+        req.sessionId = crypto.randomUUID();
+      } else {
+        req.sessionId = req.cookies["session-id"];
+      }
+      return req.sessionId;
+    },
+    cookieName: "csrf-token",
+    cookieOptions: {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+    },
+    size: 64,
+    ignoredMethods: ["GET", "HEAD", "OPTIONS"],
+  });
+  _generateCsrfToken = result.generateCsrfToken;
+  _doubleCsrfProtection = result.doubleCsrfProtection;
+}
+
+const generateCsrfToken = (req, res) => {
+  initCsrf();
+  return _generateCsrfToken(req, res);
+};
+
+const doubleCsrfProtection = (req, res, next) => {
+  initCsrf();
+  return _doubleCsrfProtection(req, res, next);
+};
 
 export { generateCsrfToken, doubleCsrfProtection };
