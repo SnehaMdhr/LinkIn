@@ -13,20 +13,19 @@ const {
 } = doubleCsrf({
   getSecret: () => csrfSecret,
 
-  getSessionIdentifier: (req) => {
-    // Use the session ID consistently for CSRF
-    if (req.sessionId) {
-      return req.sessionId;
-    }
-
-    if (req.cookies?.["session-id"]) {
-      req.sessionId = req.cookies["session-id"];
-      return req.sessionId;
-    }
-
-    req.sessionId = crypto.randomUUID();
+getSessionIdentifier: (req) => {
+  if (req.sessionId) {
     return req.sessionId;
-  },
+  }
+
+  if (req.cookies?.["session-id"]) {
+    req.sessionId = req.cookies["session-id"];
+    return req.sessionId;
+  }
+
+  req.sessionId = crypto.randomUUID();
+  return req.sessionId;
+},
 
   cookieName: "csrf-token",
 
