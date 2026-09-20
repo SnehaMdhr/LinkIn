@@ -35,7 +35,11 @@ const app = express();
 app.use(morgan("combined"));
 app.use(cors({
   origin: (origin, callback) => {
-    const allowed = ["http://localhost:3000", "http://localhost:3001", "https://link-in-two.vercel.app"];
+    const allowed = [
+  "http://localhost:3000",
+  "http://localhost:3001",
+  process.env.FRONTEND_URL,
+].filter(Boolean);
     if (!origin || allowed.includes(origin)) {
       callback(null, true);
     } else {
