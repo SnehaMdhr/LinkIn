@@ -1,6 +1,5 @@
 const logos = [
   { name: "GitHub", width: "w-20" },
-  { name: "Vercel", width: "w-16" },
   { name: "Stripe", width: "w-16" },
   { name: "Notion", width: "w-20" },
   { name: "Figma", width: "w-14" },
