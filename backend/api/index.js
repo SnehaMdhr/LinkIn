@@ -35,6 +35,7 @@ app.use(cors({
     const allowed = [
       process.env.FRONTEND_URL,
       process.env.VERCEL_URL,
+      "https://link-in-two.vercel.app",
       "http://localhost:3000",
       "http://localhost:3001",
     ].filter(Boolean);
