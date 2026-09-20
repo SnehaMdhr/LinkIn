@@ -67,7 +67,7 @@ app.get("/api/csrf-token", (req, res) => {
     req.sessionId = sessionId;
     res.cookie("session-id", sessionId, {
       httpOnly: true,
-      sameSite: "lax",
+      sameSite: "none",
       secure: process.env.NODE_ENV === "production",
       path: "/",
       maxAge: 24 * 60 * 60 * 1000, // 24 hours

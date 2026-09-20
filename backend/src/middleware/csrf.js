@@ -28,7 +28,7 @@ const {
   cookieName: "csrf-token",
   cookieOptions: {
     httpOnly: true,
-    sameSite: "lax",
+    sameSite: "none",
     secure: process.env.NODE_ENV === "production",
     path: "/",
   },

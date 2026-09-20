@@ -198,7 +198,7 @@ export const loginUser = async (req, res, next) => {
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      sameSite: "none",
       path: "/",
       maxAge: 15 * 24 * 60 * 60 * 1000,
     });
@@ -237,7 +237,7 @@ export const logoutUser = async (req, res, next) => {
     res.cookie("token", "", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      sameSite: "none",
       path: "/",
       maxAge: 0,
     });
@@ -425,7 +425,7 @@ export const googleSignIn = async (req, res, next) => {
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      sameSite: "none",
       path: "/",
       maxAge: 15 * 24 * 60 * 60 * 1000,
     });
@@ -586,7 +586,7 @@ export const changePassword = async (req, res, next) => {
     res.cookie("token", "", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      sameSite: "none",
       path: "/",
       maxAge: 0,
     });

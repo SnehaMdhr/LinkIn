@@ -184,7 +184,7 @@ export const verifyMfaLogin = async (req, res, next) => {
     res.cookie("token", accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      sameSite: "none",
       path: "/",
       maxAge,
     });
